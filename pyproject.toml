@@ -7,6 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+sqlmodel = "^0.0.11"
+strawberry-graphql = {extras = ["debug-server"], version = "^0.211.1"}
+fastapi = "^0.104.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -28,7 +31,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 pythonpath = "."
-addopts = --doctest-modules
+addopts = "--doctest-modules"
 
 [tool.isort]
 profile = "black"
