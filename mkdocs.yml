@@ -1,0 +1,15 @@
+site_name: Graphemy
+repo_url: https://github.com/MDoreto/graphemy
+repo_name: MDoreto/graphemy
+edit_uri: tree/master/docs
+theme:
+  name: material
+  language: en
+  logo: assets/logo.png
+  favicon: assets/logo.png
+
+markdown_extensions:
+  - attr_list
+
+extra_css:
+  - stylesheets/extra.css
