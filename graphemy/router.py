@@ -1,3 +1,4 @@
+import glob
 import importlib.util
 import inspect
 import os
@@ -10,21 +11,25 @@ from graphql.error.graphql_error import format_error as format_graphql_error
 from strawberry.dataloader import DataLoader
 from strawberry.fastapi import GraphQLRouter
 from strawberry.http import GraphQLHTTPResponse
+from strawberry.schema import BaseSchema
 from strawberry.types import ExecutionResult
 
 from .models import MyDate, MyModel
-from .setup import graphql_directory
+from .setup import Setup
 
-for root, dirs, files in os.walk(graphql_directory):
-    for file in files:
-        if file.endswith('.py'):
-            module_name = file[:-3]  # Remove the '.py' extension
-            module_path = os.path.join(root, file)
-            spec = importlib.util.spec_from_file_location(
-                module_name, module_path
-            )
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+
+def import_all(directory):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.py') and file != '__init__.py':
+                module_name = os.path.splitext(file)[0]
+                print('modu', module_name)
+                module_path = os.path.relpath(
+                    os.path.join(root, module_name), directory
+                )
+                module_path = module_path.replace(os.path.sep, '.')
+
+                importlib.import_module(module_path)
 
 
 def dict_to_tuple(data):
@@ -93,34 +98,6 @@ class Mutation:
 
 
 # atribui as queries e mutations para as classes vazias e seta atributos de modulo para armazenas schemas e filtros
-for n, cls in [
-    (n, cls)
-    for n, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    if issubclass(cls, MyModel) and cls.__name__ != 'MyModel'
-]:
-    setattr(sys.modules[__name__], cls.__name__ + 'Schema', cls.schema)
-    setattr(sys.modules[__name__], cls.__name__ + 'Filter', cls.filter)
-    setattr(
-        Query,
-        cls.__query__
-        if hasattr(cls, '__query__')
-        else cls.__tablename__ + 's',
-        strawberry.field(cls.query, permission_classes=[cls.auth]),
-    )
-    if cls._default_mutation:
-        setattr(
-            Mutation,
-            'put_' + cls.__tablename__.lower(),
-            strawberry.mutation(cls.mutation, permission_classes=[cls.auth]),
-        )
-    if cls._delete_mutation:
-        setattr(
-            Mutation,
-            'delete_' + cls.__tablename__.lower(),
-            strawberry.mutation(
-                cls.delete_mutation, permission_classes=[cls.auth]
-            ),
-        )
 
 
 schema = strawberry.Schema(
@@ -129,6 +106,70 @@ schema = strawberry.Schema(
 
 
 class MyGraphQLRouter(GraphQLRouter):
+    def __init__(self, query, **kwargs):
+        for root, dirs, files in os.walk(Setup.folder):
+            for file in files:
+                if file.endswith('.py') and file != '__init__.py':
+                    module_name = os.path.splitext(file)[0]
+                    module_path = os.path.join(root, module_name)
+                    module_path = os.path.relpath(
+                        os.path.join(root, module_name)
+                    )
+                    module_path = module_path.replace(os.path.sep, '.')
+                    for n, cls in [
+                        (n, cls)
+                        for n, cls in inspect.getmembers(
+                            sys.modules[module_path], inspect.isclass
+                        )
+                        if issubclass(cls, MyModel)
+                        and cls.__name__ != 'MyModel'
+                    ]:
+                        print('cls.__name__', cls.__name__)
+                        setattr(
+                            sys.modules[__name__],
+                            cls.__name__ + 'Schema',
+                            cls.schema,
+                        )
+                        setattr(
+                            sys.modules[__name__],
+                            cls.__name__ + 'Filter',
+                            cls.filter,
+                        )
+                        print(
+                            'query',
+                            cls.__query__
+                            if hasattr(cls, '__query__')
+                            else cls.__tablename__ + 's',
+                        )
+                        setattr(
+                            query,
+                            cls.__query__
+                            if hasattr(cls, '__query__')
+                            else cls.__tablename__ + 's',
+                            strawberry.field(
+                                cls.query, permission_classes=[cls.auth]
+                            ),
+                        )
+                        if cls._default_mutation:
+                            setattr(
+                                schema.mutation,
+                                'put_' + cls.__tablename__.lower(),
+                                strawberry.mutation(
+                                    cls.mutation, permission_classes=[cls.auth]
+                                ),
+                            )
+                        if cls._delete_mutation:
+                            setattr(
+                                schema.mutation,
+                                'delete_' + cls.__tablename__.lower(),
+                                strawberry.mutation(
+                                    cls.delete_mutation,
+                                    permission_classes=[cls.auth],
+                                ),
+                            )
+        schema = strawberry.Schema(query=strawberry.type(query))
+        super().__init__(schema=schema, **kwargs)
+
     async def process_result(
         self, request: Request, result: ExecutionResult
     ) -> GraphQLHTTPResponse:

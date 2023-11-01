@@ -6,13 +6,10 @@ from typing import Annotated
 import strawberry
 
 from .models import ListFilters
-from .setup import graphql_directory
 
 
 def find_class_directory(class_name):
-    for file_path in glob.iglob(
-        f'{graphql_directory}/**/*.py', recursive=True
-    ):
+    for file_path in glob.iglob('graphql_directory/**/*.py', recursive=True):
         with open(file_path, 'r') as file:
             # Verifica se a classe está definida no arquivo
             if f'class {class_name}' in file.read():
@@ -39,9 +36,9 @@ def dl(class_name=None, many=True):
             async def new_func(
                 self,
                 info,
-                filters: Annotated[f, strawberry.lazy('app.routers.graphql')]
+                filters: Annotated[f, strawberry.lazy('graphemy.router')]
                 | None = None,
-            ) -> Annotated[s, strawberry.lazy('app.routers.graphql')] | None:
+            ) -> Annotated[s, strawberry.lazy('graphemy.router')] | None:
                 return await func(
                     self,
                     info,
@@ -56,10 +53,10 @@ def dl(class_name=None, many=True):
             async def new_func(
                 self,
                 info,
-                filters: Annotated[f, strawberry.lazy('app.routers.graphql')]
+                filters: Annotated[f, strawberry.lazy('graphemy.router')]
                 | None = None,
                 list_filters: ListFilters | None = None,
-            ) -> list[Annotated[s, strawberry.lazy('app.routers.graphql')]]:
+            ) -> list[Annotated[s, strawberry.lazy('graphemy.router')]]:
                 return await func(
                     self,
                     info,

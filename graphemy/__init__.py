@@ -1,4 +1,4 @@
-# from graphemy.dl import dl
-from graphemy.models import MyModel
-from graphemy.services import get_list, get_one
-from graphemy.setup import engine, graphql_directory
+from graphemy.dl import dl
+from graphemy.models import MyModel, get_list, get_one
+from graphemy.router import MyGraphQLRouter, import_all, schema
+from graphemy.setup import Setup
