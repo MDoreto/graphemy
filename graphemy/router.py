@@ -1,80 +1,20 @@
-import glob
 import importlib.util
 import inspect
 import os
 import sys
+from types import GenericAlias
 
 import strawberry
 from fastapi import Request
 from graphql.error import GraphQLError
 from graphql.error.graphql_error import format_error as format_graphql_error
-from strawberry.dataloader import DataLoader
 from strawberry.fastapi import GraphQLRouter
 from strawberry.http import GraphQLHTTPResponse
-from strawberry.schema import BaseSchema
 from strawberry.types import ExecutionResult
 
-from .models import MyDate, MyModel
+from .dl import MyDataLoader
+from .models import MyModel
 from .setup import Setup
-
-
-def import_all(directory):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith('.py') and file != '__init__.py':
-                module_name = os.path.splitext(file)[0]
-                print('modu', module_name)
-                module_path = os.path.relpath(
-                    os.path.join(root, module_name), directory
-                )
-                module_path = module_path.replace(os.path.sep, '.')
-
-                importlib.import_module(module_path)
-
-
-def dict_to_tuple(data):
-    result = []
-    for key, value in data.items():
-        if isinstance(value, MyDate):
-            value = vars(value)
-        if isinstance(value, dict):
-            nested_tuples = dict_to_tuple(value)
-            result.append((key, nested_tuples))
-        elif isinstance(value, list):
-            # Substitui a lista por uma tupla antes de chamar recursivamente a função
-            nested_tuples = tuple(
-                sorted(
-                    dict_to_tuple(item)
-                    if isinstance(item, dict) or isinstance(item, MyDate)
-                    else item
-                    for item in value
-                )
-            )
-            result.append((key, nested_tuples))
-        else:
-            result.append((key, value))
-    return tuple(sorted(result))
-
-
-class MyDataLoader(DataLoader):
-    async def load(self, keys, filters: dict | None = False):
-        if filters == False:
-            return await super().load(keys)
-        filters['keys'] = (
-            tuple(keys)
-            if isinstance(keys, list)
-            else keys.strip()
-            if isinstance(keys, str)
-            else keys
-        )
-        return await super().load(dict_to_tuple(filters))
-
-
-functions = [
-    (n, f, os.path.basename(os.path.dirname(inspect.getfile(f))))
-    for n, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction)
-    if n.startswith('dl_')
-]
 
 
 async def fake_dl_one(keys):
@@ -85,28 +25,11 @@ async def fake_dl_list(keys):
     return {k: [] for k in keys}.values()
 
 
-class Query:
-    @strawberry.field
-    async def hello_word(self, info) -> str:
-        return 'Hello Word'
-
-
-class Mutation:
-    @strawberry.mutation
-    async def hello_word(self, info) -> str:
-        return 'Hello Word'
-
-
-# atribui as queries e mutations para as classes vazias e seta atributos de modulo para armazenas schemas e filtros
-
-
-schema = strawberry.Schema(
-    query=strawberry.type(Query), mutation=strawberry.type(Mutation)
-)
-
-
 class MyGraphQLRouter(GraphQLRouter):
-    def __init__(self, query, **kwargs):
+    functions = []
+
+    def __init__(self, query, context_getter=None, **kwargs):
+        functions = []
         for root, dirs, files in os.walk(Setup.folder):
             for file in files:
                 if file.endswith('.py') and file != '__init__.py':
@@ -116,6 +39,23 @@ class MyGraphQLRouter(GraphQLRouter):
                         os.path.join(root, module_name)
                     )
                     module_path = module_path.replace(os.path.sep, '.')
+
+                    functions.extend(
+                        [
+                            (
+                                n,
+                                f,
+                                os.path.splitext(
+                                    os.path.basename(inspect.getfile(f))
+                                )[0],
+                            )
+                            for n, f in inspect.getmembers(
+                                sys.modules[module_path], inspect.isfunction
+                            )
+                            if n.startswith('dl_')
+                        ]
+                    )
+
                     for n, cls in [
                         (n, cls)
                         for n, cls in inspect.getmembers(
@@ -124,7 +64,6 @@ class MyGraphQLRouter(GraphQLRouter):
                         if issubclass(cls, MyModel)
                         and cls.__name__ != 'MyModel'
                     ]:
-                        print('cls.__name__', cls.__name__)
                         setattr(
                             sys.modules[__name__],
                             cls.__name__ + 'Schema',
@@ -134,12 +73,6 @@ class MyGraphQLRouter(GraphQLRouter):
                             sys.modules[__name__],
                             cls.__name__ + 'Filter',
                             cls.filter,
-                        )
-                        print(
-                            'query',
-                            cls.__query__
-                            if hasattr(cls, '__query__')
-                            else cls.__tablename__ + 's',
                         )
                         setattr(
                             query,
@@ -167,8 +100,22 @@ class MyGraphQLRouter(GraphQLRouter):
                                     permission_classes=[cls.auth],
                                 ),
                             )
+
+        async def get_context() -> dict:
+            context = context_getter() if context_getter else {}
+            for n, f, m in functions:
+                context[n] = MyDataLoader(
+                    load_fn=f
+                    if Setup.get_permission(m, context)
+                    else fake_dl_list
+                    if type(inspect.signature(f).return_annotation)
+                    == GenericAlias
+                    else fake_dl_one
+                )
+            return context
+
         schema = strawberry.Schema(query=strawberry.type(query))
-        super().__init__(schema=schema, **kwargs)
+        super().__init__(schema=schema, context_getter=get_context, **kwargs)
 
     async def process_result(
         self, request: Request, result: ExecutionResult
