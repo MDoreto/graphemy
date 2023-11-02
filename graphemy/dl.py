@@ -4,8 +4,47 @@ import os
 from typing import Annotated
 
 import strawberry
+from strawberry.dataloader import DataLoader
 
-from .models import ListFilters
+from .models import ListFilters, MyDate
+
+
+class MyDataLoader(DataLoader):
+    async def load(self, keys, filters: dict | None = False):
+        if filters == False:
+            return await super().load(keys)
+        filters['keys'] = (
+            tuple(keys)
+            if isinstance(keys, list)
+            else keys.strip()
+            if isinstance(keys, str)
+            else keys
+        )
+        return await super().load(dict_to_tuple(filters))
+
+
+def dict_to_tuple(data):
+    result = []
+    for key, value in data.items():
+        if isinstance(value, MyDate):
+            value = vars(value)
+        if isinstance(value, dict):
+            nested_tuples = dict_to_tuple(value)
+            result.append((key, nested_tuples))
+        elif isinstance(value, list):
+            # Substitui a lista por uma tupla antes de chamar recursivamente a função
+            nested_tuples = tuple(
+                sorted(
+                    dict_to_tuple(item)
+                    if isinstance(item, dict) or isinstance(item, MyDate)
+                    else item
+                    for item in value
+                )
+            )
+            result.append((key, nested_tuples))
+        else:
+            result.append((key, value))
+    return tuple(sorted(result))
 
 
 def find_class_directory(class_name):

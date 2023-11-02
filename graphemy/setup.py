@@ -11,13 +11,13 @@ class Setup:
         cls.engine = engine
         cls.folder = folder
 
-    def get_permission(module, info):
+    def get_permission(module, context):
         return True
 
     @classmethod
     def get_auth(cls, module):
         class IsAuthenticated(BasePermission):
             async def has_permission(self, source, info, **kwargs) -> bool:
-                return cls.get_permission(module, info)
+                return cls.get_permission(module, info.context)
 
         return IsAuthenticated
