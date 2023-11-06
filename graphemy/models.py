@@ -4,7 +4,7 @@ from datetime import date
 from typing import Optional
 
 import strawberry
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, literal
 
 from .setup import Setup
 
@@ -13,9 +13,6 @@ from .setup import Setup
 class ListFilters:
     field: str
     asc: bool
-
-
-get_auth = Setup.get_auth
 
 
 @strawberry.input
@@ -43,7 +40,7 @@ class MyModel(SQLModel):
         folder = os.path.basename(
             os.path.dirname(os.path.abspath(inspect.getfile(cls)))
         )
-        return get_auth(folder)
+        return Setup.get_auth(folder)
 
     @classmethod
     @property
@@ -93,7 +90,8 @@ class MyModel(SQLModel):
                     Schema,
                     funcao.__name__,
                     strawberry.field(
-                        funcao, permission_classes=[get_auth(funcao.module)]
+                        funcao,
+                        permission_classes=[Setup.get_auth(funcao.module)],
                     ),
                 )
             cls._schema = strawberry.experimental.pydantic.type(
@@ -179,33 +177,31 @@ def get_keys(model: 'MyModel', id: str | list[str]) -> tuple | str:
     Retrieve one or multiple attributes or keys from a MyModel instance.
 
     Args:
-        model (MyModel): An instance of the MyModel class from which attributes/keys will be retrieved.
-        id (str or list of str): The attribute/key name(s) to be retrieved from the model.
+                                                                    model (MyModel): An instance of the MyModel class from which attributes/keys will be retrieved.
+                                                                    id (str or list of str): The attribute/key name(s) to be retrieved from the model.
 
     Returns:
-        str, tuple, or any: The retrieved attribute(s) or key(s) from the model. If 'id' is a single string,the corresponding attribute/key value is returned. If 'id' is a list of strings, a tuple containing the corresponding attribute/key values in the order specified is returned. The returned values may be converted to strings if they are integers or have leading/trailing whitespaces.
+                                                                    str, tuple, or any: The retrieved attribute(s) or key(s) from the model. If 'id' is a single string,the corresponding attribute/key value is returned. If 'id' is a list of strings, a tuple containing the corresponding attribute/key values in the order specified is returned. The returned values may be converted to strings if they are integers or have leading/trailing whitespaces.
 
     Examples:
-        >>> from graphemy import MyModel
+                                                                    >>> from graphemy import MyModel
 
-        >>> class Hero(MyModel):
-        ...     name:str
-        ...     power_level:int
+                                                                    >>> class Hero(MyModel):
+                                                                    ...     name:str
+                                                                    ...     power_level:int
 
-        >>> hero_instance = Hero(name='Superman', power_level=100)
+                                                                    >>> hero_instance = Hero(name='Superman', power_level=100)
 
-        >>> get_keys(hero_instance, 'name')
-        'Superman'
-        >>> get_keys(hero_instance, 'power_level')
-        '100'
-        >>> get_keys(hero_instance, ['name', 'power_level'])
-        ('Superman', 100)
+                                                                    >>> get_keys(hero_instance, 'name')
+                                                                    'Superman'
+                                                                    >>> get_keys(hero_instance, 'power_level')
+                                                                    100
+                                                                    >>> get_keys(hero_instance, ['name', 'power_level'])
+                                                                    ('Superman', 100)
     """
     if isinstance(id, list):
         return tuple([getattr(model, id[i]) for i in range(len(id))])
     value = getattr(model, id)
-    if isinstance(value, int):
-        value = str(value)
     if isinstance(value, str):
         value = value.strip()
     return value
@@ -246,9 +242,8 @@ def get_filter(
     if contains_fore:
         return or_(
             *[
-                getattr(model, id).in_(
-                    [a.strip() for a in ','.join(keys).split(',')]
-                )
+                literal(value).like('%' + getattr(model, id) + '%')
+                for value in keys
             ]
         )
     return getattr(model, id).in_(
@@ -264,6 +259,7 @@ async def get_list(
     contains=False,
     contains_fore=False,
 ):
+
     groups = {}
     id_groups = {}
     filters = {}
@@ -284,7 +280,7 @@ async def get_list(
             filter_temp = []
             for k, v in f[0][1]:
                 if v:
-                    if isinstance(v, tuple):
+                    if isinstance(v[0], tuple):
                         if v[2][1]:
                             filter_temp.append(
                                 extract('year', getattr(model, k)) == v[2][1]
@@ -316,16 +312,17 @@ async def get_list(
                 ),
             )
         )
+    engine = Setup.engine
     with Session(engine) as session:
         results = session.exec(
             query.where(or_(*query_filters)).params(**params)
         ).all()
         for r in results:
             if contains:
-                for it in get_keys(r, id).split(','):
-                    it = it.strip()
-                    if it in id_groups:
-                        for t in id_groups[it]:
+                key = get_keys(r, id)
+                for i in id_groups:
+                    if i in key:
+                        for t in id_groups[i]:
                             if not t[0][1] or all(
                                 [getattr(r, k) in v for k, v in t[0][1] if v]
                             ):
@@ -376,7 +373,6 @@ async def get_one(
             for k, v in f[0][1]:
                 if v:
                     if isinstance(v[0], tuple):
-                        print(v)
                         if v[2][1]:
                             filter_temp.append(
                                 extract('year', getattr(model, k)) == v[2][1]
@@ -397,6 +393,7 @@ async def get_one(
         query_filters.append(
             and_(*filter_temp, get_filter(model, filters[f], id, params, i))
         )
+    engine = Setup.engine
     with Session(engine) as session:
         results = session.exec(
             query.where(or_(*query_filters)).params(**params)
@@ -442,6 +439,7 @@ async def get_all(model: 'MyModel', filters, engine=None):
 async def put_item(model: 'MyModel', item, id='id', engine=engine):
     id = [getattr(item, i) for i in id]
     kwargs = vars(item)
+    engine = Setup.engine
     with Session(engine) as session:
         if not id:
             new_item = model(**kwargs)
@@ -459,6 +457,7 @@ async def put_item(model: 'MyModel', item, id='id', engine=engine):
 
 async def delete_item(model: 'MyModel', item, id='id', engine=engine):
     id = [getattr(item, i) for i in id]
+    engine = Setup.engine
     with Session(engine) as session:
         item = session.get(model, id)
         session.delete(item)
