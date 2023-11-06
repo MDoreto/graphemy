@@ -20,12 +20,15 @@ isort = "^5.12.0"
 taskipy = "^1.12.0"
 pytest-asyncio = "^0.21.1"
 httpx = "^0.25.0"
+pytest-env = "^1.1.1"
 
 
 [tool.poetry.group.doc.dependencies]
 mkdocs-material = "^9.4.7"
 mkdocstrings = "^0.23.0"
 mkdocstrings-python = "^1.7.3"
+mkdocs-macros-plugin = "^1.0.5"
+jinja2 = "^3.1.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -34,6 +37,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = "--doctest-modules"
+env = [
+    "GRAPHEMY_PATH=.\\examples"]
 
 [tool.isort]
 profile = "black"
@@ -44,4 +49,4 @@ lint = "blue . && isort ."
 docs = "mkdocs serve"
 pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
-post_test = "converage html"
+post_test = "coverage html"

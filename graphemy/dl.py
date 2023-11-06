@@ -7,6 +7,7 @@ import strawberry
 from strawberry.dataloader import DataLoader
 
 from .models import ListFilters, MyDate
+from .setup import Setup
 
 
 class MyDataLoader(DataLoader):
@@ -48,11 +49,14 @@ def dict_to_tuple(data):
 
 
 def find_class_directory(class_name):
-    for file_path in glob.iglob('graphql_directory/**/*.py', recursive=True):
-        with open(file_path, 'r') as file:
-            # Verifica se a classe está definida no arquivo
-            if f'class {class_name}' in file.read():
-                return os.path.basename(os.path.dirname(file_path))
+    for root, dirs, files in os.walk(Setup.folder):
+        for file in files:
+            if file.endswith('.py') and file != '__init__.py':
+                file_path = os.path.join(root, file)
+                with open(file_path, 'r') as file:
+                    # Verifica se a classe está definida no arquivo
+                    if f'class {class_name}' in file.read():
+                        return os.path.basename(os.path.dirname(file_path))
     return None
 
 

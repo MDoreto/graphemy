@@ -28,7 +28,7 @@ async def fake_dl_list(keys):
 class MyGraphQLRouter(GraphQLRouter):
     functions = []
 
-    def __init__(self, query, context_getter=None, **kwargs):
+    def __init__(self, query, mutation, context_getter=None, **kwargs):
         functions = []
         for root, dirs, files in os.walk(Setup.folder):
             for file in files:
@@ -39,7 +39,6 @@ class MyGraphQLRouter(GraphQLRouter):
                         os.path.join(root, module_name)
                     )
                     module_path = module_path.replace(os.path.sep, '.')
-
                     functions.extend(
                         [
                             (
@@ -85,7 +84,7 @@ class MyGraphQLRouter(GraphQLRouter):
                         )
                         if cls._default_mutation:
                             setattr(
-                                schema.mutation,
+                                mutation,
                                 'put_' + cls.__tablename__.lower(),
                                 strawberry.mutation(
                                     cls.mutation, permission_classes=[cls.auth]
@@ -93,7 +92,7 @@ class MyGraphQLRouter(GraphQLRouter):
                             )
                         if cls._delete_mutation:
                             setattr(
-                                schema.mutation,
+                                mutation,
                                 'delete_' + cls.__tablename__.lower(),
                                 strawberry.mutation(
                                     cls.delete_mutation,
@@ -101,8 +100,8 @@ class MyGraphQLRouter(GraphQLRouter):
                                 ),
                             )
 
-        async def get_context() -> dict:
-            context = context_getter() if context_getter else {}
+        async def get_context(request: Request) -> dict:
+            context = context_getter(request) if context_getter else {}
             for n, f, m in functions:
                 context[n] = MyDataLoader(
                     load_fn=f
@@ -114,7 +113,9 @@ class MyGraphQLRouter(GraphQLRouter):
                 )
             return context
 
-        schema = strawberry.Schema(query=strawberry.type(query))
+        schema = strawberry.Schema(
+            query=strawberry.type(query), mutation=strawberry.type(mutation)
+        )
         super().__init__(schema=schema, context_getter=get_context, **kwargs)
 
     async def process_result(
