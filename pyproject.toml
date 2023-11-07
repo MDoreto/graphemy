@@ -10,6 +10,7 @@ python = "^3.12"
 sqlmodel = "^0.0.11"
 strawberry-graphql = {extras = ["debug-server"], version = "^0.211.1"}
 fastapi = "^0.104.1"
+python-dotenv = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -29,6 +30,7 @@ mkdocstrings = "^0.23.0"
 mkdocstrings-python = "^1.7.3"
 mkdocs-macros-plugin = "^1.0.5"
 jinja2 = "^3.1.2"
+mdx-include = "^1.4.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,7 +40,7 @@ build-backend = "poetry.core.masonry.api"
 pythonpath = "."
 addopts = "--doctest-modules"
 env = [
-    "GRAPHEMY_PATH=.\\examples"]
+    "GRAPHEMY_PATH=examples\\query\\models"]
 
 [tool.isort]
 profile = "black"
@@ -46,7 +48,7 @@ line_length = 79
 
 [tool.taskipy.tasks]
 lint = "blue . && isort ."
-docs = "mkdocs serve"
+docs = "mkdocs serve -a 0.0.0.0:8001"
 pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
 post_test = "coverage html"

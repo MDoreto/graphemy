@@ -28,8 +28,17 @@ async def fake_dl_list(keys):
 class MyGraphQLRouter(GraphQLRouter):
     functions = []
 
-    def __init__(self, query, mutation, context_getter=None, **kwargs):
+    def __init__(
+        self,
+        query,
+        mutation=None,
+        context_getter=None,
+        permission_getter=None,
+        engine=None,
+        **kwargs,
+    ):
         functions = []
+        Setup.setup(engine=engine, get_perm=permission_getter)
         for root, dirs, files in os.walk(Setup.folder):
             for file in files:
                 if file.endswith('.py') and file != '__init__.py':
@@ -39,6 +48,7 @@ class MyGraphQLRouter(GraphQLRouter):
                         os.path.join(root, module_name)
                     )
                     module_path = module_path.replace(os.path.sep, '.')
+                    exec(f'import {module_path}')
                     functions.extend(
                         [
                             (
@@ -82,7 +92,7 @@ class MyGraphQLRouter(GraphQLRouter):
                                 cls.query, permission_classes=[cls.auth]
                             ),
                         )
-                        if cls._default_mutation:
+                        if mutation and cls._default_mutation:
                             setattr(
                                 mutation,
                                 'put_' + cls.__tablename__.lower(),
@@ -90,7 +100,7 @@ class MyGraphQLRouter(GraphQLRouter):
                                     cls.mutation, permission_classes=[cls.auth]
                                 ),
                             )
-                        if cls._delete_mutation:
+                        if mutation and cls._delete_mutation:
                             setattr(
                                 mutation,
                                 'delete_' + cls.__tablename__.lower(),
@@ -114,7 +124,8 @@ class MyGraphQLRouter(GraphQLRouter):
             return context
 
         schema = strawberry.Schema(
-            query=strawberry.type(query), mutation=strawberry.type(mutation)
+            query=strawberry.type(query),
+            mutation=strawberry.type(mutation) if mutation else None,
         )
         super().__init__(schema=schema, context_getter=get_context, **kwargs)
 

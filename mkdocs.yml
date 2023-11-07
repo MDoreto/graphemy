@@ -7,15 +7,33 @@ theme:
   language: en
   logo: assets/logo.png
   favicon: assets/logo.png
+  features:
+  - search.suggest
+  - search.highlight
 
 markdown_extensions:
-  - attr_list
+- attr_list
+- mdx_include
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format ''
+- pymdownx.tabbed:
+    alternate_style: true
+    
 
 extra_css:
   - stylesheets/extra.css
 
 plugins:
+- macros
+- search
 - mkdocstrings:
     handlers:
       python: 
         paths: [graphemy]
+
+extra:
+  commands:
+    run: poetry run graphemy

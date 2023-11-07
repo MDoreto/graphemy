@@ -49,14 +49,14 @@ def dict_to_tuple(data):
 
 
 def find_class_directory(class_name):
-    for root, dirs, files in os.walk(Setup.folder):
+    for root, dirs, files in os.walk(os.path.join(os.getcwd(), Setup.folder)):
         for file in files:
             if file.endswith('.py') and file != '__init__.py':
                 file_path = os.path.join(root, file)
                 with open(file_path, 'r') as file:
                     # Verifica se a classe está definida no arquivo
                     if f'class {class_name}' in file.read():
-                        return os.path.basename(os.path.dirname(file_path))
+                        return os.path.relpath(file_path)
     return None
 
 
