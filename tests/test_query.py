@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture()
 def client():
     from fastapi.testclient import TestClient
 
@@ -15,35 +15,77 @@ def client():
 
 @pytest.mark.asyncio
 async def test_query(client):
-    query = """query MyQuery {
-                    banks {
-                        id
-                        name
-                        accounts {
-                        id
-                        modality
-                        owner
-                        }
-                    }
-                    }"""
+    query = """
+            query MyQuery {
+                accounts {
+                    bankId
+                    id
+                    modality
+                    owner
+                }
+            }
+        """
 
     response = client.post('/graphql', json={'query': query})
 
     assert response.status_code == 200
     assert response.json() == {
         'data': {
-            'banks': [
+            'accounts': [
                 {
-                    'id': 1,
-                    'name': 'Anonymous Bank',
-                    'accounts': [
-                        {
-                            'id': '654654-5',
-                            'modality': 'CDB',
-                            'owner': 'Matheus Doreto',
-                        }
-                    ],
+                    'bankId': 1,
+                    'id': '12354-6',
+                    'modality': 'current',
+                    'owner': 'Matheus Doreto',
+                },
+                {
+                    'bankId': 1,
+                    'id': '84554-6',
+                    'modality': 'saving',
+                    'owner': 'Matheus Doreto',
+                },
+                {
+                    'bankId': 1,
+                    'id': '15687-6',
+                    'modality': 'current',
+                    'owner': 'Matheus Doreto',
+                },
+            ]
+        }
+    }
+
+
+@pytest.mark.asyncio
+async def test_query_filter(client):
+    query = """
+            query MyQuery {
+                accounts(filters: {modality: "current"}) {
+                    bankId
+                    id
+                    modality
+                    owner
                 }
+            }
+        """
+
+    response = client.post('/graphql', json={'query': query})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        'data': {
+            'accounts': [
+                {
+                    'bankId': 1,
+                    'id': '12354-6',
+                    'modality': 'current',
+                    'owner': 'Matheus Doreto',
+                },
+                {
+                    'bankId': 1,
+                    'id': '15687-6',
+                    'modality': 'current',
+                    'owner': 'Matheus Doreto',
+                },
             ]
         }
     }

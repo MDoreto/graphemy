@@ -6,9 +6,9 @@ The most interesting feature of Graphemy is the generation of queries with multi
 
 Now, lets create a `main.py` file where we will setup our db connection, in our example I will use a in-memory database.
 
-```Python hl_lines="4 5 11-15"
+```Python hl_lines="4 5 10-14"
 # main.py
-{!./examples/query/main.py[ln:1-14]!}
+{!./examples/query/main.py[ln:1-13]!}
 
 # More code here later 👇
 ```
@@ -26,9 +26,9 @@ Now, lets create a `main.py` file where we will setup our db connection, in our 
 
 Setup the fastapi server with a default query, passing the created engine as parameter.
 
-```Python hl_lines="2 3 9 18-21 24-26"
+```Python hl_lines="2 3 8 17-20 23-25"
 # main.py
-{!./examples/query/main.py[ln:1-25]!}
+{!./examples/query/main.py[ln:1-24]!}
 
 # More code here later 👇
 ```
@@ -37,22 +37,15 @@ Setup the fastapi server with a default query, passing the created engine as par
 <summary>👀 Full file preview</summary>
 
 ```Python
-{!./examples//main.py!}
+{!./examples/query/main.py!}
 ```
 
 </details>
 
 ## Creating Models
 
-Now we need to create the models that will represent our DB tables, for now our classes will be declared exactly the same of SQLmodel, but importing MyModel.
-Create a `models` folder in project's folder and a `bank.py` file inside it.
-
-```Python hl_lines="7"
-# models/bank.py
-{!./examples/query/models/bank.py[ln:1-8]!}
-
-```
-I recommend to create one file for each table. Create another file called `account.py`
+Now we need to create the models that will represent our DB tables, for now our classes will be declared exactly the same of SQLmodel, but importing MyModel.I recommend to create one file for each table.
+Create a `models` folder in project's folder and a `account.py` file inside it.
 
 ```Python hl_lines="7"
 # models/account.py
@@ -72,7 +65,7 @@ set GRAPHEMY_PATH="models"
 
 You have many ways to seed data into database, in this tutorial we will create tables using a default SQLmodel function that can be called from MyModel, but as we are creating table.
 
-```Python hl_lines="28"
+```Python hl_lines="27"
 # main.py
 {!./examples/query/main.py[ln:1-27]!}
 
@@ -83,7 +76,7 @@ You have many ways to seed data into database, in this tutorial we will create t
 <summary>👀 Full file preview</summary>
 
 ```Python
-{!./examples//main.py!}
+{!./examples/query/main.py!}
 ```
 
 </details>
@@ -92,15 +85,18 @@ You have many ways to seed data into database, in this tutorial we will create t
 
 Here we will insert just a one bank and account that will be retrive after in our api.
 
-```Python hl_lines="30-33 35-38"
+```Python hl_lines="29-37 39-43"
 # main.py
-{!./examples/query/main.py[ln:1-38]!}
+{!./examples/query/main.py[ln:1-43]!}
 
-# More code here later 👇
 ```
 
 ## Starting server
 
-Finally we can start our fastapi server running `uvicorn main:app` and then access `localhost:8000/graphql` and we will see the graphql debugger with our default 'hello world' query and bank and account queries.
+Finally we can start our fastapi server running `uvicorn main:app` and then access `localhost:8000/graphql` and we will see the graphql debugger with our default 'hello world' and account queries.
 
 ![strawberry using_models](/assets/using_models.png){ width="800" .center}
+
+Note that filters are alreay configured in auto-generated query:
+
+![strawberry using_models_1](/assets/using_models_1.png){ width="800" .center}

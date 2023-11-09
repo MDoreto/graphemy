@@ -39,8 +39,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = "--doctest-modules"
-env = [
-    "GRAPHEMY_PATH=examples\\query\\models"]
+
 
 [tool.isort]
 profile = "black"
@@ -48,7 +47,7 @@ line_length = 79
 
 [tool.taskipy.tasks]
 lint = "blue . && isort ."
-docs = "mkdocs serve -a 0.0.0.0:8001"
+docs = "mkdocs serve"
 pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
 post_test = "coverage html"

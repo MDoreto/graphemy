@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 from types import GenericAlias
+from typing import Annotated
 
 import strawberry
 from fastapi import Request
@@ -13,7 +14,7 @@ from strawberry.http import GraphQLHTTPResponse
 from strawberry.types import ExecutionResult
 
 from .dl import MyDataLoader
-from .models import MyModel
+from .models import ListFilters, MyModel
 from .setup import Setup
 
 
@@ -32,31 +33,33 @@ class MyGraphQLRouter(GraphQLRouter):
         self,
         query,
         mutation=None,
+        folder=None,
         context_getter=None,
         permission_getter=None,
         engine=None,
         **kwargs,
     ):
         functions = []
-        Setup.setup(engine=engine, get_perm=permission_getter)
+        classes = {}
+        Setup.setup(engine=engine, folder=folder, get_perm=permission_getter)
         for root, dirs, files in os.walk(Setup.folder):
             for file in files:
                 if file.endswith('.py') and file != '__init__.py':
                     module_name = os.path.splitext(file)[0]
                     module_path = os.path.join(root, module_name)
-                    module_path = os.path.relpath(
+                    module_path_rel = os.path.relpath(
                         os.path.join(root, module_name)
                     )
-                    module_path = module_path.replace(os.path.sep, '.')
+                    module_path = module_path_rel.replace(os.path.sep, '.')
                     exec(f'import {module_path}')
                     functions.extend(
                         [
                             (
                                 n,
                                 f,
-                                os.path.splitext(
-                                    os.path.basename(inspect.getfile(f))
-                                )[0],
+                                
+                                    os.path.relpath(inspect.getfile(f))
+                                ,
                             )
                             for n, f in inspect.getmembers(
                                 sys.modules[module_path], inspect.isfunction
@@ -64,51 +67,52 @@ class MyGraphQLRouter(GraphQLRouter):
                             if n.startswith('dl_')
                         ]
                     )
-
                     for n, cls in [
                         (n, cls)
                         for n, cls in inspect.getmembers(
                             sys.modules[module_path], inspect.isclass
                         )
-                        if issubclass(cls, MyModel)
-                        and cls.__name__ != 'MyModel'
+                        if issubclass(cls, MyModel) and n != 'MyModel'
                     ]:
-                        setattr(
-                            sys.modules[__name__],
-                            cls.__name__ + 'Schema',
-                            cls.schema,
-                        )
-                        setattr(
-                            sys.modules[__name__],
-                            cls.__name__ + 'Filter',
-                            cls.filter,
-                        )
-                        setattr(
-                            query,
-                            cls.__query__
-                            if hasattr(cls, '__query__')
-                            else cls.__tablename__ + 's',
-                            strawberry.field(
-                                cls.query, permission_classes=[cls.auth]
-                            ),
-                        )
-                        if mutation and cls._default_mutation:
-                            setattr(
-                                mutation,
-                                'put_' + cls.__tablename__.lower(),
-                                strawberry.mutation(
-                                    cls.mutation, permission_classes=[cls.auth]
-                                ),
-                            )
-                        if mutation and cls._delete_mutation:
-                            setattr(
-                                mutation,
-                                'delete_' + cls.__tablename__.lower(),
-                                strawberry.mutation(
-                                    cls.delete_mutation,
-                                    permission_classes=[cls.auth],
-                                ),
-                            )
+                        classes[n] = (cls, module_path_rel)
+
+        for n, (cls, path) in classes.items():
+            cls.set_schema(classes)
+
+            setattr(
+                sys.modules[__name__],
+                cls.__name__ + 'Schema',
+                cls.schema,
+            )
+            setattr(
+                sys.modules[__name__],
+                cls.__name__ + 'Filter',
+                cls.filter,
+            )
+            setattr(
+                query,
+                cls.__query__
+                if hasattr(cls, '__query__')
+                else cls.__tablename__ + 's',
+                strawberry.field(cls.query, permission_classes=[cls.auth]),
+            )
+            if mutation and cls._default_mutation:
+                setattr(
+                    mutation,
+                    'put_' + cls.__tablename__.lower(),
+                    strawberry.mutation(
+                        cls.mutation, permission_classes=[cls.auth]
+                    ),
+                )
+            if mutation and cls._delete_mutation:
+                setattr(
+                    mutation,
+                    'delete_' + cls.__tablename__.lower(),
+                    strawberry.mutation(
+                        cls.delete_mutation,
+                        permission_classes=[cls.auth],
+                    ),
+                )
 
         async def get_context(request: Request) -> dict:
             context = context_getter(request) if context_getter else {}
