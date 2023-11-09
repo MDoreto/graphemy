@@ -1,5 +1,3 @@
-import os
-
 from dotenv import load_dotenv
 from strawberry.permission import BasePermission
 
@@ -8,19 +6,21 @@ load_dotenv()
 
 class Setup:
     engine = None
-    folder = os.getenv('GRAPHEMY_PATH')
+    folder = ''
     get_permission = None
 
     @classmethod
-    def setup(cls, engine, get_perm=None):
+    def setup(cls, engine, folder=None, get_perm=None):
         cls.engine = engine
-
-        def get_permission(module, context):
-            return True
-
+        if folder:
+            cls.folder = folder
         if get_perm:
             cls.get_permission = get_perm
         else:
+
+            def get_permission(module, context):
+                return True
+
             cls.get_permission = get_permission
 
     @classmethod
