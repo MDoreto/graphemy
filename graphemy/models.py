@@ -1,29 +1,59 @@
 import inspect
 import os
 from datetime import date
-from typing import Optional
-from typing import Annotated
+from typing import Annotated, Optional
 
 import strawberry
 from sqlmodel import SQLModel, literal
 
 from .setup import Setup
 
+
 def set_dl(func):
     if not func.dl:
         return func
-    f = func.dl + "Filter"
-    s = func.dl + "Schema"
+    f = func.dl + 'Filter'
+    s = func.dl + 'Schema'
     if not func.many:
-        async def new_func(self, info, filters: Annotated[f, strawberry.lazy( "graphemy.router")]| None = None) -> Annotated[s, strawberry.lazy( "graphemy.router")] | None:
-            return await func(self, info, {"filters": vars(
-                filters)if filters else None, "list_filters": None})
+
+        async def new_func(
+            self,
+            info,
+            filters: Annotated[f, strawberry.lazy('graphemy.router')]
+            | None = None,
+        ) -> Annotated[s, strawberry.lazy('graphemy.router')] | None:
+            return await func(
+                self,
+                info,
+                {
+                    'filters': vars(filters) if filters else None,
+                    'list_filters': None,
+                },
+            )
+
     else:
-        async def new_func(self, info, filters: Annotated[f, strawberry.lazy( "graphemy.router")] | None= None, list_filters: ListFilters | None = None) -> list[ Annotated[s, strawberry.lazy( "graphemy.router")]]:
-            return await func(self, info, {"filters": vars(
-                filters)if filters else None, "list_filters": vars(list_filters) if list_filters else None})
+
+        async def new_func(
+            self,
+            info,
+            filters: Annotated[f, strawberry.lazy('graphemy.router')]
+            | None = None,
+            list_filters: ListFilters | None = None,
+        ) -> list[Annotated[s, strawberry.lazy('graphemy.router')]]:
+            return await func(
+                self,
+                info,
+                {
+                    'filters': vars(filters) if filters else None,
+                    'list_filters': vars(list_filters)
+                    if list_filters
+                    else None,
+                },
+            )
+
     new_func.__name__ = func.__name__
     return new_func
+
 
 @strawberry.input
 class ListFilters:
@@ -99,43 +129,43 @@ class MyModel(SQLModel):
 
             cls._query = field
         return cls._query
+
     @classmethod
     @property
     def schema(cls):
         return cls._schema
-    
+
     @classmethod
     def set_schema(cls, classes):
         if not cls._schema:
             if cls.__tablename__ != 'employee':
+
                 class Schema:
                     pass
+
             else:
+
                 class Schema:
                     ms_token: strawberry.Private[str]
                     scopes: list[str]
 
             for funcao in [
-                func
-                for func in cls.__dict__.values()
-                if hasattr(func, 'dl')
+                func for func in cls.__dict__.values() if hasattr(func, 'dl')
             ]:
-                
+
                 setattr(
                     Schema,
                     funcao.__name__,
                     strawberry.field(
                         set_dl(funcao),
                         permission_classes=[
-                            Setup.get_auth(
-                                classes[funcao.dl][1]
-                            )
+                            Setup.get_auth(classes[funcao.dl][1])
                         ],
                     ),
                 )
         cls._schema = strawberry.experimental.pydantic.type(
-                    cls, all_fields=True, name=f'{cls.__name__}Schema'
-                )(Schema)
+            cls, all_fields=True, name=f'{cls.__name__}Schema'
+        )(Schema)
 
     @classmethod
     @property
