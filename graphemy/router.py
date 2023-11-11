@@ -1,9 +1,7 @@
-import importlib.util
 import inspect
 import os
 import sys
 from types import GenericAlias
-from typing import Annotated
 
 import strawberry
 from fastapi import Request
@@ -14,7 +12,7 @@ from strawberry.http import GraphQLHTTPResponse
 from strawberry.types import ExecutionResult
 
 from .dl import MyDataLoader
-from .models import ListFilters, MyModel
+from .models import MyModel
 from .setup import Setup
 
 
@@ -57,9 +55,7 @@ class MyGraphQLRouter(GraphQLRouter):
                             (
                                 n,
                                 f,
-                                
-                                    os.path.relpath(inspect.getfile(f))
-                                ,
+                                os.path.relpath(inspect.getfile(f)),
                             )
                             for n, f in inspect.getmembers(
                                 sys.modules[module_path], inspect.isfunction

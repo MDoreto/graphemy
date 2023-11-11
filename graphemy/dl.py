@@ -4,8 +4,7 @@ import os
 
 from strawberry.dataloader import DataLoader
 
-from .models import  MyDate
-from .setup import Setup
+from .models import MyDate
 
 
 class MyDataLoader(DataLoader):
@@ -81,7 +80,28 @@ def dict_to_tuple(data: dict) -> tuple:
     return tuple(sorted(result))
 
 
-def dl(class_name: str | None = None, many: bool = True):
+def dl(class_name: str | None = None, many: bool = True) -> callable:
+    """
+    Decorator for attaching metadata to a function indicating the expected behavior of a DataLoader.
+
+    Args:
+        class_name (str, optional): The data type that the DataLoader is expected to return. Defaults to None.
+        many (bool, optional): Indicates whether the DataLoader should return a single item or a list of items.
+            Defaults to True.
+
+    Returns:
+        callable: The decorated function.
+
+    Example:
+        >>> @dl(class_name="MyData", many=False)
+        ... def load_data(item_id: int) -> dict:
+        ...     # Implementation of data loading
+        ...     pass
+
+        >>> assert getattr(load_data, 'dl') == "MyData"
+        >>> assert getattr(load_data, 'many') is False
+    """
+
     def wrapper(func):
         setattr(func, 'dl', class_name)
         setattr(func, 'many', many)

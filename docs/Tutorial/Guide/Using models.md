@@ -8,7 +8,7 @@ Now, lets create a `main.py` file where we will setup our db connection, in our 
 
 ```Python hl_lines="4 5 10-14"
 # main.py
-{!./examples/query/main.py[ln:1-13]!}
+{!./examples/tutorial/main.py[ln:1-13]!}
 
 # More code here later 👇
 ```
