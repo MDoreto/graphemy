@@ -3,7 +3,7 @@ from fixture import client
 
 
 @pytest.mark.asyncio
-def test_mutation(client):
+async def test_mutation(client):
     mutation = """
            mutation MyMutation {
                 putBank(params: {code: 2, name: "New Bank"}) {
@@ -39,7 +39,7 @@ def test_mutation(client):
 
 
 @pytest.mark.asyncio
-def test_mutation_edit(client):
+async def test_mutation_edit(client):
     mutation = """
           mutation MyMutation {
                 putBank(params: {id: 2, code: 2, name: "Updated Bank"}) {
@@ -76,7 +76,7 @@ def test_mutation_edit(client):
 
 
 @pytest.mark.asyncio
-def test_delete(client):
+async def test_delete(client):
     query = """
           mutation MyMutation {
                 deleteBank(params: {id: 2}) {

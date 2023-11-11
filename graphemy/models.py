@@ -83,9 +83,7 @@ class MyModel(SQLModel):
     @classmethod
     @property
     def auth(cls):
-        folder = os.path.basename(
-            os.path.dirname(os.path.abspath(inspect.getfile(cls)))
-        )
+        folder = os.path.relpath(inspect.getfile(cls))
         return Setup.get_auth(folder)
 
     @classmethod
@@ -152,7 +150,6 @@ class MyModel(SQLModel):
             for funcao in [
                 func for func in cls.__dict__.values() if hasattr(func, 'dl')
             ]:
-
                 setattr(
                     Schema,
                     funcao.__name__,
