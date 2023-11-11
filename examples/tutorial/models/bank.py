@@ -4,6 +4,8 @@ from graphemy import MyModel, dl, get_one
 
 
 class Bank(MyModel, table=True):
+    _default_mutation = True
+    _delete_mutation = True
     id: int = Field(primary_key=True)
     name: str
     code: int

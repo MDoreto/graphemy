@@ -19,15 +19,20 @@ engine = create_engine(
 
 
 class Query:
-    @strawberry.field
-    async def hello_world(self, info) -> str:
-        return 'Hello World'
+    pass
+
+
+class Mutation:
+    pass
 
 
 app = FastAPI()
 
 graphql_app = MyGraphQLRouter(
-    query=Query, engine=engine, folder='examples\\tutorial\\models'
+    query=Query,
+    mutation=Mutation,
+    engine=engine,
+    folder='examples\\tutorial\\models',
 )
 app.include_router(graphql_app, prefix='/graphql')
 
