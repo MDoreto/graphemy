@@ -15,5 +15,5 @@ class Bank(MyModel, table=True):
         return await info.context['dl_account_bank'].load(self.id, parameters)
 
 
-async def dl_bank(keys: list[tuple]) -> list[Bank.schema]:
+async def dl_bank(keys: list[tuple]) -> Bank.schema:
     return await get_one(Bank, keys)

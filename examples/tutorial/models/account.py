@@ -21,7 +21,9 @@ class Account(MyModel, table=True):
 
     @dl('Bank', False)
     async def bank(self, info, parameters):
-        return await info.context['dl_bank'].load(self.bank_id, parameters)
+        a = await info.context['dl_bank'].load(self.bank_id, parameters)
+        print('AAAAAAAAAAAAAAa', a)
+        return a
 
     @dl('Services')
     async def services(self, info, parameters):
@@ -30,7 +32,7 @@ class Account(MyModel, table=True):
         )
 
 
-async def dl_account(keys: list[tuple]) -> list[Account.schema]:
+async def dl_account(keys: list[tuple]) -> Account.schema:
     return await get_one(Account, keys, ['bank_id', 'id'])
 
 
