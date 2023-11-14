@@ -1,6 +1,5 @@
 from datetime import date
 
-import strawberry
 from fastapi import FastAPI
 from sqlmodel import Session, create_engine
 from sqlmodel.pool import StaticPool
