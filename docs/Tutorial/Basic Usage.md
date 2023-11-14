@@ -7,7 +7,7 @@ Now, lets create a `main.py` file in our project and create a class for our quer
 
 ```Python 
 # main.py
-{!./examples/basic/main.py[ln:1-6]!}
+{!./examples/tutorial/main.py[ln:1-6]!}
 
 # More code here later 👇
 ```
@@ -16,7 +16,7 @@ Now, lets create a `main.py` file in our project and create a class for our quer
 <summary>👀 Full file preview</summary>
 
 ```Python
-{!./examples/basic/main.py!}
+{!./examples/tutorial/main.py!}
 ```
 
 </details>
@@ -26,7 +26,7 @@ Now, lets create a `main.py` file in our project and create a class for our quer
 Then, create a router based on this query and import it in a fastapi app.
 
 ```Python hl_lines="9-16"
-{!./examples/basic/main.py!}
+{!./examples/tutorial/main.py!}
 ```
 
 ## Testing
