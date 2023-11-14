@@ -22,7 +22,6 @@ class Account(MyModel, table=True):
     @dl('Bank', False)
     async def bank(self, info, parameters):
         a = await info.context['dl_bank'].load(self.bank_id, parameters)
-        print('AAAAAAAAAAAAAAa', a)
         return a
 
     @dl('Services')
