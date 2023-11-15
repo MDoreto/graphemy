@@ -14,6 +14,24 @@ class Bank(MyModel, table=True):
     async def accounts(self, info, parameters):
         return await info.context['dl_account_bank'].load(self.id, parameters)
 
+    @dl('Transaction')
+    async def transactions(self, info, parameters):
+        return await info.context['dl_transaction_bank'].load(
+            self.id, parameters
+        )
+
+    @dl()
+    async def external_field(self, info) -> str:
+        return 'Put you logic her'
+
+    @dl()
+    async def custom_dl(self, info) -> int:
+        return await info.context['dl_custom'].load(self.id, False)
+
 
 async def dl_bank(keys: list[tuple]) -> Bank.schema:
     return await get_one(Bank, keys)
+
+
+async def dl_custom(keys: list[str]) -> int:
+    return keys
