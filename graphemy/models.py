@@ -136,16 +136,9 @@ class MyModel(SQLModel):
     @classmethod
     def set_schema(cls, classes):
         if not cls._schema:
-            if cls.__tablename__ != 'employee':
 
-                class Schema:
-                    pass
-
-            else:
-
-                class Schema:
-                    ms_token: strawberry.Private[str]
-                    scopes: list[str]
+            class Schema:
+                pass
 
             for funcao in [
                 func for func in cls.__dict__.values() if hasattr(func, 'dl')
@@ -156,7 +149,11 @@ class MyModel(SQLModel):
                     strawberry.field(
                         set_dl(funcao),
                         permission_classes=[
-                            Setup.get_auth(classes[funcao.dl][1])
+                            Setup.get_auth(
+                                classes[
+                                    funcao.dl if funcao.dl else cls.__name__
+                                ][1]
+                            )
                         ],
                     ),
                 )
@@ -391,7 +388,7 @@ async def get_list(
                         if not t[0][1] or all(
                             [getattr(r, k) in v for k, v in t[0][1] if v]
                         ):
-                            groups[key].append(r)
+                            groups[t].append(r)
     return groups.values()
 
 
@@ -455,7 +452,7 @@ async def get_one(
                     if not t[0][1] or all(
                         [getattr(r, k) in v for k, v in t[0][1] if v]
                     ):
-                        groups[key] = r
+                        groups[t] = r
     return groups.values()
 
 
@@ -488,7 +485,7 @@ async def put_item(model: 'MyModel', item, id='id', engine=engine):
     kwargs = vars(item)
     engine = Setup.engine
     with Session(engine) as session:
-        if not id:
+        if not id or None in id:
             new_item = model(**kwargs)
         else:
             new_item = session.get(model, id)
