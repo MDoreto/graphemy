@@ -157,6 +157,8 @@ class MyModel(SQLModel):
                         ],
                     ),
                 )
+            for field, v in cls.__customfields__.items():
+                setattr(Schema, field, v)
         cls._schema = strawberry.experimental.pydantic.type(
             cls, all_fields=True, name=f'{cls.__name__}Schema'
         )(Schema)
@@ -221,27 +223,27 @@ def get_keys(model: 'MyModel', id: str | list[str]) -> tuple | str:
     Retrieve one or multiple attributes or keys from a MyModel instance.
 
     Args:
-        model (MyModel): An instance of the MyModel class from which attributes/keys will be retrieved.
-        id (str or list of str): The attribute/key name(s) to be retrieved from the model.
+            model (MyModel): An instance of the MyModel class from which attributes/keys will be retrieved.
+            id (str or list of str): The attribute/key name(s) to be retrieved from the model.
 
     Returns:
-        str, tuple, or any: The retrieved attribute(s) or key(s) from the model. If 'id' is a single string,the corresponding attribute/key value is returned. If 'id' is a list of strings, a tuple containing the corresponding attribute/key values in the order specified is returned. The returned values may be converted to strings if they are integers or have leading/trailing whitespaces.
+            str, tuple, or any: The retrieved attribute(s) or key(s) from the model. If 'id' is a single string,the corresponding attribute/key value is returned. If 'id' is a list of strings, a tuple containing the corresponding attribute/key values in the order specified is returned. The returned values may be converted to strings if they are integers or have leading/trailing whitespaces.
 
     Examples:
-        >>> from graphemy import MyModel
+            >>> from graphemy import MyModel
 
-        >>> class Hero(MyModel):
-        ...     name:str
-        ...     power_level:int
+            >>> class Hero(MyModel):
+            ...     name:str
+            ...     power_level:int
 
-        >>> hero_instance = Hero(name='Superman', power_level=100)
+            >>> hero_instance = Hero(name='Superman', power_level=100)
 
-        >>> get_keys(hero_instance, 'name')
-        'Superman'
-        >>> get_keys(hero_instance, 'power_level')
-        100
-        >>> get_keys(hero_instance, ['name', 'power_level'])
-        ('Superman', 100)
+            >>> get_keys(hero_instance, 'name')
+            'Superman'
+            >>> get_keys(hero_instance, 'power_level')
+            100
+            >>> get_keys(hero_instance, ['name', 'power_level'])
+            ('Superman', 100)
     """
     if isinstance(id, list):
         return tuple([getattr(model, id[i]) for i in range(len(id))])
