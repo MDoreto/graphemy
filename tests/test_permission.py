@@ -43,7 +43,7 @@ async def test_permission_query(client):
 
 
 @pytest.mark.asyncio
-async def test_permission_query(client):
+async def test_permission_query_children(client):
 
     query = """
         query MyQuery {
