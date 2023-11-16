@@ -121,7 +121,7 @@ class MyModel(SQLModel):
             async def field(
                 self, info, filters: cls.filter | None = None
             ) -> list[cls.schema]:
-                if not Setup.get_permission(folder, info):
+                if not await Setup.get_permission(folder, info.context):
                     return []
                 return await get_all(cls, filters)
 

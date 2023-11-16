@@ -18,7 +18,7 @@ class Setup:
             cls.get_permission = get_perm
         else:
 
-            def get_permission(module, context):
+            async def get_permission(module, context):
                 return True
 
             cls.get_permission = get_permission
@@ -26,8 +26,8 @@ class Setup:
     @classmethod
     def get_auth(cls, module):
         class IsAuthenticated(BasePermission):
-            def has_permission(self, source, info, **kwargs) -> bool:
-                if not cls.get_permission(module, info):
+            async def has_permission(self, source, info, **kwargs) -> bool:
+                if not await cls.get_permission(module, info.context):
                     info.context['response'].status_code = 403
                     if not 'errors' in info.context['request'].scope:
                         info.context['request'].scope['errors'] = [module]

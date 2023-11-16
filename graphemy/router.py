@@ -111,11 +111,11 @@ class MyGraphQLRouter(GraphQLRouter):
                 )
 
         async def get_context(request: Request) -> dict:
-            context = context_getter(request) if context_getter else {}
+            context = await context_getter(request) if context_getter else {}
             for n, f, m in functions:
                 context[n] = MyDataLoader(
                     load_fn=f
-                    if Setup.get_permission(m, context)
+                    if await Setup.get_permission(m, context)
                     else fake_dl_list
                     if type(inspect.signature(f).return_annotation)
                     == GenericAlias

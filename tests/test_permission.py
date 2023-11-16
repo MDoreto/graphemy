@@ -8,7 +8,7 @@ def client():
     from examples.tutorial.main import app, engine
     from graphemy import Setup
 
-    def get_permission(module, context):
+    async def get_permission(module, context):
         return 'account' in module
 
     Setup.setup(engine=engine, get_perm=get_permission)
