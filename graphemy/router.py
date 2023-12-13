@@ -35,6 +35,7 @@ class MyGraphQLRouter(GraphQLRouter):
         context_getter=None,
         permission_getter=None,
         engine=None,
+        extensions=[],
         **kwargs,
     ):
         functions = []
@@ -126,6 +127,7 @@ class MyGraphQLRouter(GraphQLRouter):
         schema = strawberry.Schema(
             query=strawberry.type(query),
             mutation=strawberry.type(mutation) if mutation else None,
+            extensions=extensions,
         )
         super().__init__(schema=schema, context_getter=get_context, **kwargs)
 
