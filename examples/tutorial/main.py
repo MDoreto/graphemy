@@ -8,7 +8,7 @@ from examples.tutorial.models.account import Account
 from examples.tutorial.models.bank import Bank
 from examples.tutorial.models.services import Services
 from examples.tutorial.models.transaction import Transaction
-from graphemy import MyGraphQLRouter, MyModel
+from graphemy import Graphemy, GraphemyRouter
 
 engine = create_engine(
     'sqlite://',
@@ -27,7 +27,7 @@ class Mutation:
 
 app = FastAPI()
 
-graphql_app = MyGraphQLRouter(
+graphql_app = GraphemyRouter(
     query=Query,
     mutation=Mutation,
     engine=engine,
@@ -35,7 +35,7 @@ graphql_app = MyGraphQLRouter(
 )
 app.include_router(graphql_app, prefix='/graphql')
 
-MyModel.metadata.create_all(engine)
+Graphemy.metadata.create_all(engine)
 
 
 with Session(engine) as session:
