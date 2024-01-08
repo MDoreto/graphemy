@@ -44,7 +44,7 @@ Setup the fastapi server with a default query, passing the created engine as par
 
 ## Creating Models
 
-Now we need to create the models that will represent our DB tables, for now our classes will be declared exactly the same of SQLmodel, but importing MyModel.I recommend to create one file for each table.
+Now we need to create the models that will represent our DB tables, for now our classes will be declared exactly the same of SQLmodel, but importing Graphemy.I recommend to create one file for each table.
 Create a `models` folder in project's folder and a `account.py` file inside it.
 
 ```Python hl_lines="7"
@@ -63,7 +63,7 @@ set GRAPHEMY_PATH="models"
 
 ### Create Tables
 
-You have many ways to seed data into database, in this tutorial we will create tables using a default SQLmodel function that can be called from MyModel, but as we are creating table.
+You have many ways to seed data into database, in this tutorial we will create tables using a default SQLmodel function that can be called from Graphemy, but as we are creating table.
 
 ```Python hl_lines="27"
 # main.py
