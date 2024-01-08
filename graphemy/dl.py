@@ -1,13 +1,14 @@
-import glob
-import inspect
-import os
-
 from strawberry.dataloader import DataLoader
 
 from .models import MyDate
 
 
 class MyDataLoader(DataLoader):
+    def __init__(self, filter_method=None, request=None, **kwargs):
+        self.filter_method = filter_method
+        self.request = request
+        super().__init__(**kwargs)
+
     async def load(self, keys, filters: dict | None = False):
         if filters == False:
             return await super().load(keys)
@@ -18,7 +19,10 @@ class MyDataLoader(DataLoader):
             if isinstance(keys, str)
             else keys
         )
-        return await super().load(dict_to_tuple(filters))
+        data = await super().load(dict_to_tuple(filters))
+        if self.filter_method:
+            data = self.filter_method(data, self.request)
+        return data
 
 
 def dict_to_tuple(data: dict) -> tuple:

@@ -1,9 +1,9 @@
 from sqlmodel import Field
 
-from graphemy import MyModel, dl, get_list
+from graphemy import Graphemy, dl, get_list
 
 
-class Services(MyModel, table=True):
+class Services(Graphemy, table=True):
     id: str = Field(primary_key=True)
     description: str
 

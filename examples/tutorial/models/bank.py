@@ -1,10 +1,10 @@
 import strawberry
 from sqlmodel import Field
 
-from graphemy import MyModel, dl, get_one
+from graphemy import Graphemy, dl, get_one
 
 
-class Bank(MyModel, table=True):
+class Bank(Graphemy, table=True):
     _default_mutation = True
     _delete_mutation = True
     __customfields__ = {
