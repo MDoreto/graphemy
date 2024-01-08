@@ -2,10 +2,10 @@ from datetime import date
 
 from sqlmodel import Field
 
-from graphemy import MyModel, dl, get_list
+from graphemy import Graphemy, dl, get_list
 
 
-class Transaction(MyModel, table=True):
+class Transaction(Graphemy, table=True):
     bank_id: int | None
     account_id: str | None
     id: int = Field(primary_key=True)

@@ -12,7 +12,7 @@ from strawberry.http import GraphQLHTTPResponse
 from strawberry.types import ExecutionResult
 
 from .dl import MyDataLoader
-from .models import MyModel
+from .models import Graphemy
 from .setup import Setup
 
 
@@ -24,26 +24,47 @@ async def fake_dl_list(keys):
     return {k: [] for k in keys}.values()
 
 
-class MyGraphQLRouter(GraphQLRouter):
+class Query:
+    pass
+
+
+class Mutation:
+    pass
+
+
+async def hello_world(self, info) -> str:
+    return 'Hello World'
+
+
+class GraphemyRouter(GraphQLRouter):
     functions = []
 
     def __init__(
         self,
-        query,
-        mutation=None,
-        folder=None,
-        context_getter=None,
-        permission_getter=None,
+        query: object = Query,
+        mutation: object = Mutation,
+        folder: str = '',
+        context_getter: callable = None,
+        permission_getter: callable = None,
+        dl_filter: callable = None,
+        query_filter: callable = True,
         engine=None,
-        extensions=[],
+        extensions: list = [],
         **kwargs,
     ):
         functions = []
         classes = {}
-        Setup.setup(engine=engine, folder=folder, get_perm=permission_getter)
+        classes_folder = {}
+        Setup.setup(
+            engine=engine,
+            folder=folder,
+            get_perm=permission_getter,
+            query_filter=query_filter,
+        )
         for root, dirs, files in os.walk(Setup.folder):
             for file in files:
                 if file.endswith('.py') and file != '__init__.py':
+                    # print(file)
                     module_name = os.path.splitext(file)[0]
                     module_path = os.path.join(root, module_name)
                     module_path_rel = os.path.relpath(
@@ -56,7 +77,7 @@ class MyGraphQLRouter(GraphQLRouter):
                             (
                                 n,
                                 f,
-                                os.path.relpath(inspect.getfile(f)),
+                                module_path_rel,
                             )
                             for n, f in inspect.getmembers(
                                 sys.modules[module_path], inspect.isfunction
@@ -69,13 +90,15 @@ class MyGraphQLRouter(GraphQLRouter):
                         for n, cls in inspect.getmembers(
                             sys.modules[module_path], inspect.isclass
                         )
-                        if issubclass(cls, MyModel) and n != 'MyModel'
+                        if issubclass(cls, Graphemy) and n != 'Graphemy'
                     ]:
                         classes[n] = (cls, module_path_rel)
-
+                        classes_folder[module_path_rel] = cls
+        need_query = True
+        need_mutation = True
         for n, (cls, path) in classes.items():
             cls.set_schema(classes)
-
+            setattr(cls, 'folder', path)
             setattr(
                 sys.modules[__name__],
                 cls.__name__ + 'Schema',
@@ -86,47 +109,65 @@ class MyGraphQLRouter(GraphQLRouter):
                 cls.__name__ + 'Filter',
                 cls.filter,
             )
-            setattr(
-                query,
-                cls.__query__
-                if hasattr(cls, '__query__')
-                else cls.__tablename__ + 's',
-                strawberry.field(cls.query, permission_classes=[cls.auth]),
-            )
-            if mutation and cls._default_mutation:
+            if not cls._disable_query.default:
+                need_query = False
+                setattr(
+                    query,
+                    cls.__query__
+                    if hasattr(cls, '__query__')
+                    else cls.__tablename__ + 's',
+                    strawberry.field(
+                        cls.query(), permission_classes=[cls.auth('query')]
+                    ),
+                )
+            if cls._default_mutation.default:
+                need_mutation = False
+                temp = strawberry.mutation(
+                    cls.mutation,
+                    permission_classes=[cls.auth('delete_mutation')],
+                )
                 setattr(
                     mutation,
                     'put_' + cls.__tablename__.lower(),
-                    strawberry.mutation(
-                        cls.mutation, permission_classes=[cls.auth]
-                    ),
+                    temp,
                 )
-            if mutation and cls._delete_mutation:
+            if cls._delete_mutation.default:
                 setattr(
                     mutation,
                     'delete_' + cls.__tablename__.lower(),
                     strawberry.mutation(
                         cls.delete_mutation,
-                        permission_classes=[cls.auth],
+                        permission_classes=[cls.auth('mutation')],
                     ),
                 )
+        if need_query:
+            setattr(
+                query,
+                'hello_world',
+                strawberry.field(hello_world),
+            )
 
         async def get_context(request: Request) -> dict:
             context = await context_getter(request) if context_getter else {}
             for n, f, m in functions:
+                cls = classes_folder[m] if m in classes_folder else None
                 context[n] = MyDataLoader(
                     load_fn=f
-                    if await Setup.get_permission(m, context)
+                    if await Setup.get_permission(cls, context, 'query')
                     else fake_dl_list
                     if type(inspect.signature(f).return_annotation)
                     == GenericAlias
-                    else fake_dl_one
+                    else fake_dl_one,
+                    filter_method=dl_filter,
+                    request=request,
                 )
             return context
 
         schema = strawberry.Schema(
             query=strawberry.type(query),
-            mutation=strawberry.type(mutation) if mutation else None,
+            mutation=None
+            if need_mutation and mutation == Mutation
+            else strawberry.type(mutation),
             extensions=extensions,
         )
         super().__init__(schema=schema, context_getter=get_context, **kwargs)
@@ -141,7 +182,9 @@ class MyGraphQLRouter(GraphQLRouter):
                 format_graphql_error(
                     GraphQLError(
                         "User don't have necessary permissions for this path",
-                        path=request.scope['errors'],
+                        path=[
+                            c.__tablename__ for c in request.scope['errors']
+                        ],
                     )
                 )
             )
