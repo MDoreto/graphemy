@@ -61,10 +61,11 @@ class GraphemyRouter(GraphQLRouter):
             get_perm=permission_getter,
             query_filter=query_filter,
         )
+        count = 0
         for root, dirs, files in os.walk(Setup.folder):
             for file in files:
                 if file.endswith('.py') and file != '__init__.py':
-                    # print(file)
+                    count +=1
                     module_name = os.path.splitext(file)[0]
                     module_path = os.path.join(root, module_name)
                     module_path_rel = os.path.relpath(
@@ -94,6 +95,7 @@ class GraphemyRouter(GraphQLRouter):
                     ]:
                         classes[n] = (cls, module_path_rel)
                         classes_folder[module_path_rel] = cls
+        print(count, " loaded files in ", os.getcwd())
         need_query = True
         need_mutation = True
         for n, (cls, path) in classes.items():
