@@ -23,19 +23,22 @@ class Setup:
         else:
             with Session(cls.engine) as session:
                 r = session.exec(query).all()
+                return r
 
     @classmethod
-    def setup(cls, engine, folder=None, get_perm=None, query_filter=True):
+    def setup(cls, engine, folder=None, get_perm=None, query_filter=None):
         if engine and 'async' in engine.__module__:
             cls.async_engine = True
         cls.engine = engine
         if query_filter:
             cls.query_filter = query_filter
         else:
-            def query_filter_default(cls,info):
+
+            def query_filter_default(cls, info):
                 return True
+
             cls.query_filter = query_filter_default
-            
+
         if folder:
             cls.folder = folder
         if get_perm:
