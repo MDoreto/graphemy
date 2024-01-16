@@ -29,8 +29,13 @@ class Setup:
         if engine and 'async' in engine.__module__:
             cls.async_engine = True
         cls.engine = engine
-        cls.query_filter = query_filter
-
+        if query_filter:
+            cls.query_filter = query_filter
+        else:
+            def query_filter_default(cls,info):
+                return True
+            cls.query_filter = query_filter_default
+            
         if folder:
             cls.folder = folder
         if get_perm:
