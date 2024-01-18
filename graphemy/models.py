@@ -3,7 +3,8 @@ from typing import Annotated, Optional
 
 import strawberry
 from sqlmodel import SQLModel, literal
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
 from .setup import Setup
 
 
@@ -471,26 +472,52 @@ async def put_item(model: 'Graphemy', item, id='id', engine=engine):
     id = [getattr(item, i) for i in id]
     kwargs = vars(item)
     engine = Setup.engine
-    with Session(engine) as session:
-        if not id or None in id:
-            new_item = model(**kwargs)
-        else:
-            new_item = session.get(model, id)
-            if not new_item:
+    if Setup.async_engine:
+        async_session = sessionmaker(
+                engine, class_=AsyncSession, expire_on_commit=False
+            )
+        async with async_session() as session:
+            if not id or None in id:
                 new_item = model(**kwargs)
-            for key, value in kwargs.items():
-                setattr(new_item, key, value)
-        session.add(new_item)
-        session.commit()
-        session.refresh(new_item)
+            else:
+                new_item = await session.get(model, id)
+                if not new_item:
+                    new_item = model(**kwargs)
+                for key, value in kwargs.items():
+                    setattr(new_item, key, value)
+            session.add(new_item)
+            await session.commit()
+            await session.refresh(new_item)
+    else:
+        with Session(engine) as session:
+            if not id or None in id:
+                new_item = model(**kwargs)
+            else:
+                new_item = session.get(model, id)
+                if not new_item:
+                    new_item = model(**kwargs)
+                for key, value in kwargs.items():
+                    setattr(new_item, key, value)
+            session.add(new_item)
+            session.commit()
+            session.refresh(new_item)
     return new_item
 
 
 async def delete_item(model: 'Graphemy', item, id='id', engine=engine):
     id = [getattr(item, i) for i in id]
     engine = Setup.engine
-    with Session(engine) as session:
-        item = session.get(model, id)
-        session.delete(item)
-        session.commit()
+    if Setup.async_engine:
+        async_session = sessionmaker(
+                engine, class_=AsyncSession, expire_on_commit=False
+            )
+        async with async_session() as session:
+            item = await session.get(model, id)
+            await session.delete(item)
+            await session.commit()
+    else:
+        with Session(engine) as session:
+            item = session.get(model, id)
+            session.delete(item)
+            session.commit()
     return item
