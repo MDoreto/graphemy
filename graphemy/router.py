@@ -126,7 +126,7 @@ class GraphemyRouter(GraphQLRouter):
                 need_mutation = False
                 temp = strawberry.mutation(
                     cls.mutation,
-                    permission_classes=[cls.auth('delete_mutation')],
+                    permission_classes=[cls.auth('mutation')],
                 )
                 setattr(
                     mutation,
@@ -139,7 +139,7 @@ class GraphemyRouter(GraphQLRouter):
                     'delete_' + cls.__tablename__.lower(),
                     strawberry.mutation(
                         cls.delete_mutation,
-                        permission_classes=[cls.auth('mutation')],
+                        permission_classes=[cls.auth('delete_mutation')],
                     ),
                 )
         if need_query:

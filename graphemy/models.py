@@ -70,7 +70,6 @@ class Graphemy(SQLModel):
     _schema = None
     _query = None
     _filter = None
-    _input = None
     __customfields__ = {}
     _default_mutation: bool = False
     _delete_mutation: bool = False
@@ -157,34 +156,23 @@ class Graphemy(SQLModel):
 
     @classmethod
     @property
-    def input(cls):
-
-        if not cls._input.default:
-
-            class Filter:
-                pass
-
-            for field_name, field in cls.__annotations__.items():
-                setattr(
-                    Filter,
-                    field_name,
-                    strawberry.field(
-                        default=None, graphql_type=Optional[field]
-                    ),
-                )
-            cls._input.default = strawberry.input(name=f'{cls.__name__}Input')(
-                Filter
-            )
-        return cls._input.default
-
-    @classmethod
-    @property
     def mutation(cls):
         from sqlalchemy.inspection import inspect as insp
 
         pk = [pk.name for pk in insp(cls).primary_key]
 
-        async def mutation(self, params: cls.input) -> cls.schema:
+        class Filter:
+            pass
+
+        for field_name, field in cls.__annotations__.items():
+            setattr(
+                Filter,
+                field_name,
+                strawberry.field(default=None, graphql_type=Optional[field]),
+            )
+        input = strawberry.input(name=f'{cls.__name__}Input')(Filter)
+
+        async def mutation(self, params: input) -> cls.schema:
             return await put_item(cls, params, pk)
 
         return mutation
@@ -196,7 +184,21 @@ class Graphemy(SQLModel):
 
         pk = [pk.name for pk in insp(cls).primary_key]
 
-        async def mutation(self, params: cls.input) -> cls.schema:
+        class Filter:
+            pass
+
+        for field_name, field in cls.__annotations__.items():
+            if field_name in pk:
+                setattr(
+                    Filter,
+                    field_name,
+                    strawberry.field(
+                        default=None, graphql_type=Optional[field]
+                    ),
+                )
+        input = strawberry.input(name=f'{cls.__name__}InputPk')(Filter)
+
+        async def mutation(self, params: input) -> cls.schema:
             return await delete_item(cls, params, pk)
 
         cls._delete = mutation
@@ -215,27 +217,27 @@ def get_keys(model: 'Graphemy', id: str | list[str]) -> tuple | str:
     Retrieve one or multiple attributes or keys from a Graphemy instance.
 
     Args:
-            model (Graphemy): An instance of the Graphemy class from which attributes/keys will be retrieved.
-            id (str or list of str): The attribute/key name(s) to be retrieved from the model.
+                    model (Graphemy): An instance of the Graphemy class from which attributes/keys will be retrieved.
+                    id (str or list of str): The attribute/key name(s) to be retrieved from the model.
 
     Returns:
-            str, tuple, or any: The retrieved attribute(s) or key(s) from the model. If 'id' is a single string,the corresponding attribute/key value is returned. If 'id' is a list of strings, a tuple containing the corresponding attribute/key values in the order specified is returned. The returned values may be converted to strings if they are integers or have leading/trailing whitespaces.
+                    str, tuple, or any: The retrieved attribute(s) or key(s) from the model. If 'id' is a single string,the corresponding attribute/key value is returned. If 'id' is a list of strings, a tuple containing the corresponding attribute/key values in the order specified is returned. The returned values may be converted to strings if they are integers or have leading/trailing whitespaces.
 
     Examples:
-            >>> from graphemy import Graphemy
+                    >>> from graphemy import Graphemy
 
-            >>> class Hero(Graphemy):
-            ...     name:str
-            ...     power_level:int
+                    >>> class Hero(Graphemy):
+                    ...     name:str
+                    ...     power_level:int
 
-            >>> hero_instance = Hero(name='Superman', power_level=100)
+                    >>> hero_instance = Hero(name='Superman', power_level=100)
 
-            >>> get_keys(hero_instance, 'name')
-            'Superman'
-            >>> get_keys(hero_instance, 'power_level')
-            100
-            >>> get_keys(hero_instance, ['name', 'power_level'])
-            ('Superman', 100)
+                    >>> get_keys(hero_instance, 'name')
+                    'Superman'
+                    >>> get_keys(hero_instance, 'power_level')
+                    100
+                    >>> get_keys(hero_instance, ['name', 'power_level'])
+                    ('Superman', 100)
     """
     if isinstance(id, list):
         return tuple([getattr(model, id[i]) for i in range(len(id))])
