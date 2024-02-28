@@ -93,11 +93,13 @@ class GraphemyRouter(GraphQLRouter):
                         )
                         if issubclass(cls, Graphemy) and n != 'Graphemy'
                     ]:
+                        
                         classes[n] = (cls, module_path_rel)
                         classes_folder[module_path_rel] = cls
         print(count, ' loaded files in ', os.getcwd())
         need_query = True
         need_mutation = True
+        print(classes)
         for n, (cls, path) in classes.items():
             cls.set_schema(classes)
             setattr(cls, 'folder', path)
