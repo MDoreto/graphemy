@@ -64,7 +64,7 @@ profile = "black"
 line_length = 79
 
 [tool.taskipy.tasks]
-example = "uvicorn examples.tutorial.main:app --reload --port 8001"
+example = "uvicorn examples.music.main:app --reload --port 8001"
 lint = "blue . && isort ."
 docs = "mkdocs serve"
 pre_test = "task lint"

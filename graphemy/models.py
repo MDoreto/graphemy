@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated, Optional
+from typing import Annotated, Optional,get_args,get_origin
 
 import strawberry
 from sqlmodel import SQLModel, literal
@@ -66,6 +66,15 @@ class MyDate:
     items: list[date] | None = None
     year: int | None = None
 
+class DlModel:
+    left:str | list[str]
+    right:str | list[str]
+    def __init__(self, left:str | list[str], right:str | list[str]):
+        self.left = left
+        self.right = right
+
+def dl_test( left = 'id', right='id'):
+    return DlModel(left, right)
 
 class Graphemy(SQLModel):
     _schema = None
@@ -75,6 +84,50 @@ class Graphemy(SQLModel):
     _default_mutation: bool = False
     _delete_mutation: bool = False
     _disable_query: bool = False
+
+    def __init_subclass__(cls, **kwargs):
+        to_remove = []
+        for attr_name, attr_type in cls.__annotations__.items():
+            if hasattr(cls, attr_name):
+                attr  = getattr(cls, attr_name)
+                if isinstance(attr, DlModel):
+                    is_list = get_origin(attr_type) == list
+                    if is_list:
+                        class_name= get_args(attr_type)
+                        class_name = class_name[0]
+                    else:
+                        class_name = attr_type
+                    dl_name=attr.right if isinstance(attr.right, str) else '_'.join(attr.right)
+                    dl_name = class_name+ '_' + dl_name
+
+                    print(attr_name,attr_type, is_list, class_name, dl_name)
+                    return_type = Annotated[class_name + 'Schema', strawberry.lazy('graphemy.router')]
+                    if is_list:
+                        return_type = list[return_type]
+                    async def new_func(
+                        self,
+                        info,
+                        filters: Annotated[class_name + 'Filter', strawberry.lazy('graphemy.router')]
+                        | None = None,
+                    ) -> return_type:
+                        return await info.context[dl_name].load(
+                            [self.bank_id, self.id], {
+                                'filters': vars(filters) if filters else None,
+                            }
+                        )
+                    new_func.__name__ = attr_name
+                    new_func.dl = class_name
+                    new_func.many = is_list
+                    new_func.right_field = attr.right
+                    new_func.dl_name = dl_name
+                    setattr(cls, attr_name,new_func)
+                    to_remove.append(attr_name)
+
+
+
+        for attr in to_remove:
+            del cls.__annotations__[attr_name]
+
 
     async def permission_getter(info):
         return True
@@ -130,15 +183,15 @@ class Graphemy(SQLModel):
     def set_schema(cls, classes):
         class Schema:
             pass
-
         for funcao in [
-            func for func in cls.__dict__.values() if hasattr(func, 'dl')
+            func for func in cls.__dict__.values() if hasattr(func,'dl')
         ]:
+            print(funcao)
             setattr(
                 Schema,
                 funcao.__name__,
                 strawberry.field(
-                    set_dl(funcao),
+                    funcao,
                     permission_classes=[
                         Setup.get_auth(
                             classes[funcao.dl if funcao.dl else cls.__name__][
@@ -149,6 +202,12 @@ class Graphemy(SQLModel):
                     ],
                 ),
             )
+            if funcao.many:
+                async def dataloader(keys: list[tuple]) -> list[cls.schema]:
+                    return await get_list(cls, keys, funcao.right_fields)
+            else:
+                async def dataloader(keys: list[tuple]) -> cls.schema:
+                    return await get_one(cls, keys, funcao.right_fields)
         for field, v in cls.__customfields__.items():
             setattr(Schema, field, v)
         cls._schema = strawberry.experimental.pydantic.type(

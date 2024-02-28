@@ -45,7 +45,7 @@ class Setup:
             cls.get_permission = get_perm
         else:
 
-            async def get_permission(module_class, context):
+            async def get_permission(module_class, context, type):
                 return True
 
             cls.get_permission = get_permission
