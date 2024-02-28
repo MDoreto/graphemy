@@ -1,10 +1,17 @@
-from datetime import date
-from sqlmodel import Field, Relationship
-from graphemy import Graphemy, dl_test
-from typing import List
+from sqlmodel import Field
+
+from graphemy import Dl, Graphemy
+import strawberry
+
+def get_cover():
+    return "a"
+
 class Album(Graphemy, table=True):
-    band_id: int 
-    id: str = Field(primary_key=True)
-    release:date
-    name:str
-    musics:list["Music"] = dl_test(left='id', right='album_id')
+    band_id: int
+    id: int = Field(primary_key=True)
+    name: str
+    musics: list['Music'] = Dl(left='id', right='album_id')
+
+    class Strawberry:
+        cover:str = strawberry.field(resolver=get_cover)
+

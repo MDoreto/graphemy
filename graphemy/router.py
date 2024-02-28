@@ -52,9 +52,8 @@ class GraphemyRouter(GraphQLRouter):
         extensions: list = [],
         **kwargs,
     ):
-        functions = []
+        functions = {}
         classes = {}
-        classes_folder = {}
         Setup.setup(
             engine=engine,
             folder=folder,
@@ -73,19 +72,6 @@ class GraphemyRouter(GraphQLRouter):
                     )
                     module_path = module_path_rel.replace(os.path.sep, '.')
                     exec(f'import {module_path}')
-                    functions.extend(
-                        [
-                            (
-                                n,
-                                f,
-                                module_path_rel,
-                            )
-                            for n, f in inspect.getmembers(
-                                sys.modules[module_path], inspect.isfunction
-                            )
-                            if n.startswith('dl_')
-                        ]
-                    )
                     for n, cls in [
                         (n, cls)
                         for n, cls in inspect.getmembers(
@@ -93,15 +79,13 @@ class GraphemyRouter(GraphQLRouter):
                         )
                         if issubclass(cls, Graphemy) and n != 'Graphemy'
                     ]:
-                        
+
                         classes[n] = (cls, module_path_rel)
-                        classes_folder[module_path_rel] = cls
         print(count, ' loaded files in ', os.getcwd())
         need_query = True
         need_mutation = True
-        print(classes)
         for n, (cls, path) in classes.items():
-            cls.set_schema(classes)
+            cls.set_schema(classes, functions)
             setattr(cls, 'folder', path)
             setattr(
                 sys.modules[__name__],
@@ -153,11 +137,14 @@ class GraphemyRouter(GraphQLRouter):
 
         async def get_context(request: Request) -> dict:
             context = await context_getter(request) if context_getter else {}
-            for n, f, m in functions:
-                cls = classes_folder[m] if m in classes_folder else None
-                context[n] = MyDataLoader(
+            for k, v in functions.items():
+                f = v[0]
+                return_class = v[1]
+                context[k] = MyDataLoader(
                     load_fn=f
-                    if await Setup.get_permission(cls, context, 'query')
+                    if await Setup.get_permission(
+                        return_class, context, 'query'
+                    )
                     else fake_dl_list
                     if type(inspect.signature(f).return_annotation)
                     == GenericAlias

@@ -1,10 +1,10 @@
-from datetime import date
-from sqlmodel import Field, Relationship
-from graphemy import Graphemy, dl_test
+from sqlmodel import Field
+
+from graphemy import Dl, Graphemy
 
 class Music(Graphemy, table=True):
-    album_id: int 
-    id: str = Field(primary_key=True)
-    name:str
-    lyrics:str
-    album:"Album" = dl_test(left='album_id', right='id')
+    album_id: int
+    id: int = Field(primary_key=True)
+    name: str
+    album: 'Album' = Dl(left='album_id', right='id')
+

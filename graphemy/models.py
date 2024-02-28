@@ -1,80 +1,33 @@
 from datetime import date
-from typing import Annotated, Optional,get_args,get_origin
+from typing import Annotated, Optional, get_args, get_origin
 
 import strawberry
-from sqlmodel import SQLModel, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlmodel import SQLModel
+from strawberry.field import StrawberryField
 from .setup import Setup
 
 
-def set_dl(func):
-    if not func.dl:
-        return func
-    f = func.dl + 'Filter'
-    s = func.dl + 'Schema'
-    if not func.many:
-
-        async def new_func(
-            self,
-            info,
-            filters: Annotated[f, strawberry.lazy('graphemy.router')]
-            | None = None,
-        ) -> Annotated[s, strawberry.lazy('graphemy.router')] | None:
-            return await func(
-                self,
-                info,
-                {
-                    'filters': vars(filters) if filters else None,
-                    'list_filters': None,
-                },
-            )
-
-    else:
-
-        async def new_func(
-            self,
-            info,
-            filters: Annotated[f, strawberry.lazy('graphemy.router')]
-            | None = None,
-            list_filters: ListFilters | None = None,
-        ) -> list[Annotated[s, strawberry.lazy('graphemy.router')]]:
-            return await func(
-                self,
-                info,
-                {
-                    'filters': vars(filters) if filters else None,
-                    'list_filters': vars(list_filters)
-                    if list_filters
-                    else None,
-                },
-            )
-
-    new_func.__name__ = func.__name__
-    return new_func
-
-
 @strawberry.input
-class ListFilters:
-    field: str
-    asc: bool
-
-
-@strawberry.input
-class MyDate:
+class DateFilter:
     range: list[date] | None = None
     items: list[date] | None = None
     year: int | None = None
 
+
 class DlModel:
-    left:str | list[str]
-    right:str | list[str]
-    def __init__(self, left:str | list[str], right:str | list[str]):
+    left: str | list[str]
+    right: str | list[str]
+
+    def __init__(self, left: str | list[str], right: str | list[str]):
         self.left = left
         self.right = right
 
-def dl_test( left = 'id', right='id'):
+
+def Dl(left='id', right='id'):
     return DlModel(left, right)
+
 
 class Graphemy(SQLModel):
     _schema = None
@@ -85,49 +38,63 @@ class Graphemy(SQLModel):
     _delete_mutation: bool = False
     _disable_query: bool = False
 
+    class Strawberry:
+        pass
+
     def __init_subclass__(cls, **kwargs):
         to_remove = []
         for attr_name, attr_type in cls.__annotations__.items():
             if hasattr(cls, attr_name):
-                attr  = getattr(cls, attr_name)
-                if isinstance(attr, DlModel):
+                attr_value = getattr(cls, attr_name)
+                if isinstance(attr_value, DlModel):
+                    print(attr_name,attr_type, type(attr_value))  
                     is_list = get_origin(attr_type) == list
                     if is_list:
-                        class_name= get_args(attr_type)
+                        class_name = get_args(attr_type)
                         class_name = class_name[0]
                     else:
                         class_name = attr_type
-                    dl_name=attr.right if isinstance(attr.right, str) else '_'.join(attr.right)
-                    dl_name = class_name+ '_' + dl_name
-
-                    print(attr_name,attr_type, is_list, class_name, dl_name)
-                    return_type = Annotated[class_name + 'Schema', strawberry.lazy('graphemy.router')]
+                    dl_name = (
+                        attr_value.right
+                        if isinstance(attr_value.right, str)
+                        else '_'.join(attr_value.right)
+                    )
+                    dl_name = 'dl_' + class_name + '_' + dl_name
+                    return_type = Annotated[
+                        class_name + 'Schema',
+                        strawberry.lazy('graphemy.router'),
+                    ]
                     if is_list:
                         return_type = list[return_type]
+
                     async def new_func(
                         self,
                         info,
-                        filters: Annotated[class_name + 'Filter', strawberry.lazy('graphemy.router')]
+                        filters: Annotated[
+                            class_name + 'Filter',
+                            strawberry.lazy('graphemy.router'),
+                        ]
                         | None = None,
                     ) -> return_type:
                         return await info.context[dl_name].load(
-                            [self.bank_id, self.id], {
+                            [getattr(self, at) for at in attr_value.left]
+                            if isinstance(attr_value.left, list)
+                            else getattr(self, attr_value.left),
+                            {
                                 'filters': vars(filters) if filters else None,
-                            }
+                            },
                         )
+
                     new_func.__name__ = attr_name
                     new_func.dl = class_name
                     new_func.many = is_list
-                    new_func.right_field = attr.right
+                    new_func.right_fields = attr_value.right
                     new_func.dl_name = dl_name
-                    setattr(cls, attr_name,new_func)
+                    setattr(cls, attr_name, new_func)
                     to_remove.append(attr_name)
 
-
-
         for attr in to_remove:
-            del cls.__annotations__[attr_name]
-
+            del cls.__annotations__[attr]
 
     async def permission_getter(info):
         return True
@@ -150,7 +117,7 @@ class Graphemy(SQLModel):
 
         for field_name, field in cls.__annotations__.items():
             field = (
-                MyDate
+                DateFilter
                 if (field == date or field == (date | None))
                 else list[field]
             )
@@ -180,13 +147,16 @@ class Graphemy(SQLModel):
         return cls._schema
 
     @classmethod
-    def set_schema(cls, classes):
+    def set_schema(cls, classes, functions):
         class Schema:
             pass
+
         for funcao in [
-            func for func in cls.__dict__.values() if hasattr(func,'dl')
+            func for func in cls.__dict__.values() if hasattr(func, 'dl')
         ]:
-            print(funcao)
+            returned_class = classes[funcao.dl][
+                0
+            ]
             setattr(
                 Schema,
                 funcao.__name__,
@@ -194,22 +164,37 @@ class Graphemy(SQLModel):
                     funcao,
                     permission_classes=[
                         Setup.get_auth(
-                            classes[funcao.dl if funcao.dl else cls.__name__][
-                                0
-                            ],
+                            returned_class,
                             'query',
                         )
                     ],
                 ),
             )
-            if funcao.many:
-                async def dataloader(keys: list[tuple]) -> list[cls.schema]:
-                    return await get_list(cls, keys, funcao.right_fields)
-            else:
-                async def dataloader(keys: list[tuple]) -> cls.schema:
-                    return await get_one(cls, keys, funcao.right_fields)
-        for field, v in cls.__customfields__.items():
-            setattr(Schema, field, v)
+            if not funcao.dl_name in functions:
+                if funcao.many:
+
+                    async def dataloader(
+                        keys: list[tuple],
+                    ) -> list[returned_class.schema]:
+                        return await get_items(
+                            returned_class, keys, funcao.right_fields, True
+                        )
+
+                else:
+
+                    async def dataloader(
+                        keys: list[tuple],
+                    ) -> returned_class.schema:
+                        return await get_items(
+                            returned_class, keys, funcao.right_fields, False
+                        )
+
+                dataloader.__name__ = funcao.dl_name
+                functions[funcao.dl_name] = (dataloader, returned_class)
+        for name, typying in cls.Strawberry.__annotations__.items():
+            print(name)
+            cls.__annotations__[name] = typying
+            setattr(Schema, name, getattr(cls.Strawberry, name))
         cls._schema = strawberry.experimental.pydantic.type(
             cls, all_fields=True, name=f'{cls.__name__}Schema'
         )(Schema)
@@ -313,8 +298,6 @@ def get_filter(
     id,
     params: dict,
     i: int,
-    contains: bool = False,
-    contains_fore: bool = False,
 ):
     if isinstance(id, list):
         filter = []
@@ -337,135 +320,33 @@ def get_filter(
     elif None in keys:
         keys.remove(None)
     params[f'p{i}'] = keys
-    if contains:
-        return or_(*[getattr(model, id).contains(valor) for valor in keys])
-    if contains_fore:
-        return or_(
-            *[
-                literal(value).like('%' + getattr(model, id) + '%')
-                for value in keys
-            ]
-        )
     return getattr(model, id).in_(
         bindparam(f'p{i}', expanding=True, literal_execute=True)
     )
 
 
-async def get_list(
-    model: 'Graphemy',
-    parameters: list[tuple],
-    id='id',
-    contains=False,
-    contains_fore=False,
+async def get_items(
+    model: 'Graphemy', parameters: list[tuple], id='id', many=True
 ):
-
     groups = {}
     id_groups = {}
     filters = {}
     params = {}
     for p in parameters:
-        f = tuple([p[0], p[2]])
+        f = p[0]
         if not f in filters:
             filters[f] = []
         filters[f].append(p[1][1])
-        groups[p] = []
+        groups[p] = [] if many else None
         if not p[1][1] in id_groups:
             id_groups[p[1][1]] = []
         id_groups[p[1][1]].append(p)
     query = select(model)
     query_filters = []
     for i, f in enumerate(filters):
-        if f[0][1]:
+        if f[1]:
             filter_temp = []
-            for k, v in f[0][1]:
-                if v:
-                    if isinstance(v[0], tuple):
-                        if v[2][1]:
-                            filter_temp.append(
-                                extract('year', getattr(model, k)) == v[2][1]
-                            )
-                        if v[0][1]:
-                            filter_temp.append(
-                                getattr(model, k).in_(list(v[0][1]))
-                            )
-                        if v[1][1] and v[1][1][0]:
-                            filter_temp.append(getattr(model, k) >= v[1][1][0])
-                        if v[1][1] and v[1][1][1]:
-                            filter_temp.append(getattr(model, k) <= v[1][1][1])
-                    else:
-                        filter_temp.append(getattr(model, k).in_(v))
-        else:
-            filter_temp = [True]
-
-        query_filters.append(
-            and_(
-                *filter_temp,
-                get_filter(
-                    model,
-                    filters[f],
-                    id,
-                    params,
-                    i,
-                    contains=contains,
-                    contains_fore=contains_fore,
-                ),
-            )
-        )
-    results = await Setup.execute_query(
-        query.where(or_(*query_filters)).params(**params)
-    )
-    for r in results:
-        if contains:
-            key = get_keys(r, id)
-            for i in id_groups:
-                if i in key:
-                    for t in id_groups[i]:
-                        if not t[0][1] or all(
-                            [getattr(r, k) in v for k, v in t[0][1] if v]
-                        ):
-                            groups[t].append(r)
-        elif contains_fore:
-            temp = get_keys(r, id)
-            for key, v in id_groups.items():
-                if temp in key:
-                    for t in v:
-                        groups[t].append(r)
-
-        else:
-            temp = id_groups[get_keys(r, id)]
-            if len(temp) == 1:
-                key = temp[0]
-                groups[key].append(r)
-            else:
-                for t in temp:
-                    if not t[0][1] or all(
-                        [getattr(r, k) in v for k, v in t[0][1] if v]
-                    ):
-                        groups[t].append(r)
-    return groups.values()
-
-
-async def get_one(model: 'Graphemy', parameters: list[tuple], id='id'):
-    groups = {}
-    id_groups = {}
-    filters = {}
-    params = {}
-    for p in parameters:
-        f = tuple([p[0], p[2]])
-        if not f in filters:
-            filters[f] = []
-        filters[f].append(p[1][1])
-        groups[p] = None
-        if not p[1][1] in id_groups:
-            id_groups[p[1][1]] = []
-
-        id_groups[p[1][1]].append(p)
-    query = select(model)
-    query_filters = []
-    for i, f in enumerate(filters):
-        if f[0][1]:
-            filter_temp = []
-            for k, v in f[0][1]:
+            for k, v in f[1]:
                 if v:
                     if isinstance(v[0], tuple):
                         if v[2][1]:
@@ -495,13 +376,19 @@ async def get_one(model: 'Graphemy', parameters: list[tuple], id='id'):
         temp = id_groups[get_keys(r, id)]
         if len(temp) == 1:
             key = temp[0]
-            groups[key] = r
+            if many:
+                groups[key].append(r)
+            else:
+                groups[key] = r
         else:
             for t in temp:
                 if not t[0][1] or all(
                     [getattr(r, k) in v for k, v in t[0][1] if v]
                 ):
-                    groups[t] = r
+                    if many:
+                        groups[key].append(r)
+                    else:
+                        groups[key] = r
     return groups.values()
 
 
@@ -510,7 +397,7 @@ async def get_all(model: 'Graphemy', filters, query_filter):
     if filters:
         filters = vars(filters)
         for k, v in filters.items():
-            if isinstance(v, MyDate):
+            if isinstance(v, DateFilter):
                 if v.year:
                     query = query.where(
                         extract('year', getattr(model, k)) == v.year
@@ -533,8 +420,8 @@ async def put_item(model: 'Graphemy', item, id='id', engine=engine):
     engine = Setup.engine
     if Setup.async_engine:
         async_session = sessionmaker(
-                engine, class_=AsyncSession, expire_on_commit=False
-            )
+            engine, class_=AsyncSession, expire_on_commit=False
+        )
         async with async_session() as session:
             if not id or None in id:
                 new_item = model(**kwargs)
@@ -568,8 +455,8 @@ async def delete_item(model: 'Graphemy', item, id='id', engine=engine):
     engine = Setup.engine
     if Setup.async_engine:
         async_session = sessionmaker(
-                engine, class_=AsyncSession, expire_on_commit=False
-            )
+            engine, class_=AsyncSession, expire_on_commit=False
+        )
         async with async_session() as session:
             item = await session.get(model, id)
             await session.delete(item)
