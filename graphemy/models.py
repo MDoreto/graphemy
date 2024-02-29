@@ -1,3 +1,4 @@
+from sqlmodel import Session, and_, bindparam, extract, or_, select
 from datetime import date
 from typing import Annotated, Optional, get_args, get_origin
 
@@ -7,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 from strawberry.field import StrawberryField
 from .setup import Setup
-
+from strawberry.tools import merge_types
 
 @strawberry.input
 class DateFilter:
@@ -47,7 +48,7 @@ class Graphemy(SQLModel):
             if hasattr(cls, attr_name):
                 attr_value = getattr(cls, attr_name)
                 if isinstance(attr_value, DlModel):
-                    print(attr_name,attr_type, type(attr_value))  
+                    print(attr_name, attr_type, type(attr_value))
                     is_list = get_origin(attr_type) == list
                     if is_list:
                         class_name = get_args(attr_type)
@@ -157,6 +158,10 @@ class Graphemy(SQLModel):
             returned_class = classes[funcao.dl][
                 0
             ]
+            # print(funcao.__name__, strawberry.field(
+            #     funcao,
+
+            # ),)
             setattr(
                 Schema,
                 funcao.__name__,
@@ -191,13 +196,13 @@ class Graphemy(SQLModel):
 
                 dataloader.__name__ = funcao.dl_name
                 functions[funcao.dl_name] = (dataloader, returned_class)
-        for name, typying in cls.Strawberry.__annotations__.items():
-            print(name)
-            cls.__annotations__[name] = typying
-            setattr(Schema, name, getattr(cls.Strawberry, name))
-        cls._schema = strawberry.experimental.pydantic.type(
-            cls, all_fields=True, name=f'{cls.__name__}Schema'
+        sch = strawberry.experimental.pydantic.type(
+        cls, all_fields=True, name=f'{cls.__name__}Schema1'
         )(Schema)
+        temp = strawberry.type(cls.Strawberry, name=f'{cls.__name__}Schema2')
+        if temp.__annotations__:
+            sch = merge_types(f'{cls.__name__}Schema1', (sch, temp))
+        cls._schema = sch
 
     @classmethod
     @property
@@ -249,10 +254,6 @@ class Graphemy(SQLModel):
         cls._delete = mutation
         return mutation
 
-
-from datetime import date
-
-from sqlmodel import Session, and_, bindparam, extract, or_, select
 
 engine = Setup.engine
 
