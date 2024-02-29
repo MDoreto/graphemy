@@ -13,5 +13,8 @@ class Album(Graphemy, table=True):
     musics: list['Music'] = Dl(left='id', right='album_id')
 
     class Strawberry:
-        cover:str = strawberry.field(resolver=get_cover)
+        cover_2:str = strawberry.field(resolver=get_cover)
+        @strawberry.field
+        def cover()-> str:
+            return "SSSDASD"
 
