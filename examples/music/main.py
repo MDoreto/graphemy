@@ -16,7 +16,7 @@ engine = create_engine(
 
 app = FastAPI()
 
-graphql_app = GraphemyRouter(engine=engine, folder='examples\\music\\models')
+graphql_app = GraphemyRouter(engine=engine)
 app.include_router(graphql_app, prefix='/graphql')
 
 Graphemy.metadata.create_all(engine)

@@ -1,5 +1,4 @@
 import inspect
-import os
 import sys
 from types import GenericAlias
 
@@ -10,9 +9,8 @@ from graphql.error.graphql_error import format_error as format_graphql_error
 from strawberry.fastapi import GraphQLRouter
 from strawberry.http import GraphQLHTTPResponse
 from strawberry.types import ExecutionResult
-
+from .schemas.generators import set_schema
 from .dl import MyDataLoader
-from .models import Graphemy
 from .setup import Setup
 
 
@@ -43,7 +41,6 @@ class GraphemyRouter(GraphQLRouter):
         self,
         query: object = Query,
         mutation: object = Mutation,
-        folder: str = '',
         context_getter: callable = None,
         permission_getter: callable = None,
         dl_filter: callable = None,
@@ -53,40 +50,15 @@ class GraphemyRouter(GraphQLRouter):
         **kwargs,
     ):
         functions = {}
-        classes = {}
         Setup.setup(
             engine=engine,
-            folder=folder,
             get_perm=permission_getter,
             query_filter=query_filter,
         )
-        count = 0
-        for root, dirs, files in os.walk(Setup.folder):
-            for file in files:
-                if file.endswith('.py') and file != '__init__.py':
-                    count += 1
-                    module_name = os.path.splitext(file)[0]
-                    module_path = os.path.join(root, module_name)
-                    module_path_rel = os.path.relpath(
-                        os.path.join(root, module_name)
-                    )
-                    module_path = module_path_rel.replace(os.path.sep, '.')
-                    exec(f'import {module_path}')
-                    for n, cls in [
-                        (n, cls)
-                        for n, cls in inspect.getmembers(
-                            sys.modules[module_path], inspect.isclass
-                        )
-                        if issubclass(cls, Graphemy) and n != 'Graphemy'
-                    ]:
-
-                        classes[n] = (cls, module_path_rel)
-        print(count, ' loaded files in ', os.getcwd())
         need_query = True
         need_mutation = True
-        for n, (cls, path) in classes.items():
-            cls.set_schema(classes, functions)
-            setattr(cls, 'folder', path)
+        for cls in Setup.classes.values():
+            set_schema(cls, functions)
             setattr(
                 sys.modules[__name__],
                 cls.__name__ + 'Schema',

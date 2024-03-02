@@ -7,9 +7,9 @@ from strawberry.permission import BasePermission
 
 class Setup:
     engine = None
-    folder = ''
     get_permission = None
     async_engine = False
+    classes = {}
 
     @classmethod
     async def execute_query(cls, query):
@@ -26,7 +26,7 @@ class Setup:
                 return r
 
     @classmethod
-    def setup(cls, engine, folder=None, get_perm=None, query_filter=None):
+    def setup(cls, engine,  get_perm=None, query_filter=None):
         if engine and 'async' in engine.__module__:
             cls.async_engine = True
         cls.engine = engine
@@ -38,9 +38,6 @@ class Setup:
                 return True
 
             cls.query_filter = query_filter_default
-
-        if folder:
-            cls.folder = folder
         if get_perm:
             cls.get_permission = get_perm
         else:
