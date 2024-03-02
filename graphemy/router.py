@@ -1,6 +1,6 @@
 import inspect
-import sys
 from types import GenericAlias
+from typing import Dict
 
 import strawberry
 from fastapi import Request
@@ -12,8 +12,8 @@ from strawberry.types import ExecutionResult
 from .schemas.generators import set_schema
 from .dl import MyDataLoader
 from .setup import Setup
-
-
+from .schemas.generators import get_query, get_put_mutation, get_delete_mutation
+import sys
 async def fake_dl_one(keys):
     return {k: None for k in keys}.values()
 
@@ -49,7 +49,7 @@ class GraphemyRouter(GraphQLRouter):
         extensions: list = [],
         **kwargs,
     ):
-        functions = {}
+        functions:Dict[str, tuple] = {}
         Setup.setup(
             engine=engine,
             get_perm=permission_getter,
@@ -59,46 +59,37 @@ class GraphemyRouter(GraphQLRouter):
         need_mutation = True
         for cls in Setup.classes.values():
             set_schema(cls, functions)
+            cls_query, cls_filter = get_query(cls)
             setattr(
                 sys.modules[__name__],
                 cls.__name__ + 'Schema',
-                cls.schema,
+                cls.__strawberry_schema__,
             )
             setattr(
                 sys.modules[__name__],
                 cls.__name__ + 'Filter',
-                cls.filter,
+                cls_filter,
             )
-            if not cls._disable_query.default:
+            if not cls.__disable_query__:
                 need_query = False
                 setattr(
                     query,
-                    cls.__query__
-                    if hasattr(cls, '__query__')
-                    else cls.__tablename__ + 's',
-                    strawberry.field(
-                        cls.query(), permission_classes=[cls.auth('query')]
-                    ),
+                    cls.__query__,
+                    cls_query,
                 )
-            if cls._default_mutation.default:
+            if cls.__put_mutation__:
                 need_mutation = False
-                temp = strawberry.mutation(
-                    cls.mutation,
-                    permission_classes=[cls.auth('mutation')],
-                )
                 setattr(
                     mutation,
                     'put_' + cls.__tablename__.lower(),
-                    temp,
+                    get_put_mutation(cls),
                 )
-            if cls._delete_mutation.default:
+            if cls.__delete_mutation__:
+                need_mutation = False
                 setattr(
                     mutation,
                     'delete_' + cls.__tablename__.lower(),
-                    strawberry.mutation(
-                        cls.delete_mutation,
-                        permission_classes=[cls.auth('delete_mutation')],
-                    ),
+                    get_delete_mutation(cls),
                 )
         if need_query:
             setattr(
@@ -109,16 +100,14 @@ class GraphemyRouter(GraphQLRouter):
 
         async def get_context(request: Request) -> dict:
             context = await context_getter(request) if context_getter else {}
-            for k, v in functions.items():
-                f = v[0]
-                return_class = v[1]
+            for k, (func, return_class) in functions.items():
                 context[k] = MyDataLoader(
-                    load_fn=f
+                    load_fn=func
                     if await Setup.get_permission(
                         return_class, context, 'query'
                     )
                     else fake_dl_list
-                    if type(inspect.signature(f).return_annotation)
+                    if type(inspect.signature(func).return_annotation)
                     == GenericAlias
                     else fake_dl_one,
                     filter_method=dl_filter,

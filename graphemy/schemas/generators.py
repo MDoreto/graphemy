@@ -7,25 +7,31 @@ from ..setup import Setup
 from typing import TYPE_CHECKING
 from ..database.operations import get_items, get_all, put_item, delete_item
 from strawberry.tools import merge_types
-
+from typing import Dict, Tuple, Callable,Optional
+from .models import DateFilter
+from datetime import date
+from sqlalchemy.inspection import inspect as insp
+import sys
 if TYPE_CHECKING:
     from ..models import Graphemy
 
 T = TypeVar('T')
 
-def set_schema(cls:"Graphemy", functions:dict):
+def set_schema(cls: "Graphemy", functions: Dict[str, Tuple[Callable, "Graphemy"]]) -> None:
+    """Set the Strawberry schema for a Graphemy class."""
+
+    # Define a class to hold Strawberry schema fields
     class Schema:
         pass
-
-    for funcao in [
-        func for func in cls.__dict__.values() if hasattr(func, 'dl')
-    ]:
-        returned_class:"Graphemy" = Setup.classes[funcao.dl]
+    for attr in cls.__dict__.values():
+        if not hasattr(attr, 'dl'):
+            continue
+        returned_class:"Graphemy" = Setup.classes[attr.dl]
         setattr(
             Schema,
-            funcao.__name__,
+            attr.__name__,
             strawberry.field(
-                funcao,
+                attr,
                 permission_classes=[
                     Setup.get_auth(
                         returned_class,
@@ -34,35 +40,36 @@ def set_schema(cls:"Graphemy", functions:dict):
                 ],
             ),
         )
-        if not funcao.dl_name in functions:
-            returned_schema = returned_class.schema
-            if funcao.many:
+        if not attr.dl_name in functions:
+            returned_schema = returned_class.__strawberry_schema__
+            if attr.many:
                 returned_schema = list[returned_schema]
-
+            print(attr)
             async def dataloader(
                 keys: list[tuple],
             ) -> returned_schema:
+                print(attr.__dict__)
                 return await get_items(
-                    returned_class, keys, funcao.target, funcao.many
+                    returned_class, keys, attr.target, attr.many
                 )
 
-            dataloader.__name__ = funcao.dl_name
-            functions[funcao.dl_name] = (dataloader, returned_class)
-    sch = strawberry.experimental.pydantic.type(
-        cls, all_fields=True, name=f'{cls.__name__}Schema1'
+            dataloader.__name__ = attr.dl_name
+            functions[attr.dl_name] = (dataloader, returned_class)
+    extra_schema = strawberry.type(cls.Strawberry, name=f'{cls.__name__}Schema2')
+    strawberry_schema = strawberry.experimental.pydantic.type(
+        cls, all_fields=True, name=f'{cls.__name__}Schema'
     )(Schema)
-    temp = strawberry.type(cls.Strawberry, name=f'{cls.__name__}Schema2')
-    if temp.__annotations__:
-        sch = merge_types(f'{cls.__name__}Schema1', (sch, temp))
-    cls.schema = sch
+    if extra_schema.__annotations__:
+        strawberry_schema = merge_types(f'{cls.__name__}Schema1', (strawberry_schema, extra_schema))
+    cls.__strawberry_schema__ = strawberry_schema
+
 
 def get_dl_function(
     field_name: str,
     field_type: T,
     field_value: DlModel,
-) -> callable:
+):
     """Generates a DataLoader function dynamically based on the field's specifications."""
-
     # Determine if the field_type is a list and extract the inner type
     is_list = get_origin(field_type) == list
     class_type = get_args(field_type)[0] if is_list else field_type
@@ -86,7 +93,7 @@ def get_dl_function(
         filters: Annotated[
             f'{class_type}Filter',
             strawberry.lazy('graphemy.router'),
-        ] = None,
+        ] | None = None,
     ) -> return_type:
         """The dynamically generated DataLoader function."""
         filter_args = vars(filters) if filters else None
@@ -106,3 +113,78 @@ def get_dl_function(
 
     return loader_func
 
+def get_query(cls:"Graphemy"):
+    class Filter:
+        pass
+
+    for field_name, field in cls.__annotations__.items():
+        field = (
+            DateFilter
+            if (field == date or field == (date | None))
+            else list[field]
+        )
+        setattr(
+            Filter,
+            field_name,
+            strawberry.field(default=None, graphql_type=Optional[field]),
+        )
+    filter = strawberry.input(name=f'{cls.__name__}Filter')(Filter)
+    async def query(
+        self, info:Info, filters: filter | None = None
+    ) -> list[cls.__strawberry_schema__]:
+        if not await cls.permission_getter(
+            info
+        ) or not await Setup.get_permission(cls, info.context, 'query'):
+            return []
+        data = await get_all(cls, filters, Setup.query_filter(cls, info))
+        return data
+    return strawberry.field(
+                        query, permission_classes=[Setup.get_auth(cls, 'query')]
+                    ), filter
+
+def get_put_mutation(cls:"Graphemy"):
+
+    pk = [pk.name for pk in insp(cls).primary_key]
+
+    class Filter:
+        pass
+
+    for field_name, field in cls.__annotations__.items():
+        setattr(
+            Filter,
+            field_name,
+            strawberry.field(default=None, graphql_type=Optional[field]),
+        )
+    input = strawberry.input(name=f'{cls.__name__}Input')(Filter)
+
+    async def mutation(self, params: input) -> cls.__strawberry_schema__:
+        return await put_item(cls, params, pk)
+
+    return strawberry.mutation(
+                    mutation,
+                    permission_classes=[Setup.get_auth(cls, 'mutation')],
+                )
+
+def get_delete_mutation(cls:"Graphemy"):
+    pk = [pk.name for pk in insp(cls).primary_key]
+    class Filter:
+        pass
+
+    for field_name, field in cls.__annotations__.items():
+        if field_name in pk:
+            setattr(
+                Filter,
+                field_name,
+                strawberry.field(
+                    default=None, graphql_type=Optional[field]
+                ),
+            )
+    input = strawberry.input(name=f'{cls.__name__}InputPk')(Filter)
+
+    async def mutation(self, params: input) -> cls.__strawberry_schema__:
+        return await delete_item(cls, params, pk)
+
+    return strawberry.mutation(
+                        mutation,
+                        permission_classes=[Setup.get_auth(cls, 'delete_mutation')],
+                    )
