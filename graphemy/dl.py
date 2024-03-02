@@ -1,19 +1,28 @@
 from strawberry.dataloader import DataLoader
+
 from .schemas.models import DateFilter
 
-class DlModel:
+
+class Dl:
     source: str | list[str]
     target: str | list[str]
 
     def __init__(self, source: str | list[str], target: str | list[str]):
+        if type(source) != type(target):
+            raise "source and target must have same type"
+        if type(source) == list:
+            if len(source) != len(target):
+                raise "source and target must have same length"
+            ids = {}
+            for i, id in enumerate(target):
+                ids[id] = source[i]
+            target.sort()
+            source = [ids[id] for id in target]
         self.source = source
         self.target = target
 
 
-def Dl(source='id', target='id'):
-    return DlModel(source, target)
-
-class MyDataLoader(DataLoader):
+class GraphemyDataLoader(DataLoader):
     def __init__(self, filter_method=None, request=None, **kwargs):
         self.filter_method = filter_method
         self.request = request
@@ -29,9 +38,7 @@ class MyDataLoader(DataLoader):
             if isinstance(keys, str)
             else keys
         )
-        print(filters)
         data = await super().load(dict_to_tuple(filters))
-        print("bbbbbb")
         if self.filter_method:
             data = self.filter_method(data, self.request)
         return data

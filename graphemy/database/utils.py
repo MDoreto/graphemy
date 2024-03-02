@@ -1,10 +1,12 @@
-from sqlmodel import and_, bindparam,  or_
 from datetime import date
 from typing import TYPE_CHECKING
 
+from sqlmodel import and_, bindparam, or_
+
 if TYPE_CHECKING:
     from ..models import Graphemy
-    
+
+
 def get_keys(model: 'Graphemy', id: str | list[str]) -> tuple | str:
     if isinstance(id, list):
         return tuple([getattr(model, id[i]) for i in range(len(id))])
@@ -12,7 +14,6 @@ def get_keys(model: 'Graphemy', id: str | list[str]) -> tuple | str:
     if isinstance(value, str):
         value = value.strip()
     return value
-
 
 
 def get_filter(

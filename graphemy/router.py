@@ -1,6 +1,7 @@
 import inspect
+import sys
 from types import GenericAlias
-from typing import Dict
+from typing import Dict,Callable
 
 import strawberry
 from fastapi import Request
@@ -9,11 +10,18 @@ from graphql.error.graphql_error import format_error as format_graphql_error
 from strawberry.fastapi import GraphQLRouter
 from strawberry.http import GraphQLHTTPResponse
 from strawberry.types import ExecutionResult
-from .schemas.generators import set_schema
-from .dl import MyDataLoader
+from sqlalchemy.engine.base import Engine
+
+from .dl import GraphemyDataLoader
+from .schemas.generators import (
+    get_delete_mutation,
+    get_put_mutation,
+    get_query,
+    set_schema,
+)
 from .setup import Setup
-from .schemas.generators import get_query, get_put_mutation, get_delete_mutation
-import sys
+
+
 async def fake_dl_one(keys):
     return {k: None for k in keys}.values()
 
@@ -41,15 +49,18 @@ class GraphemyRouter(GraphQLRouter):
         self,
         query: object = Query,
         mutation: object = Mutation,
-        context_getter: callable = None,
-        permission_getter: callable = None,
-        dl_filter: callable = None,
-        query_filter: callable = None,
-        engine=None,
+        context_getter: Callable | None = None,
+        permission_getter: Callable | None = None,
+        dl_filter: Callable | None = None,
+        query_filter: Callable | None = None,
+        engine:Engine | Dict[str, Engine]=None,
         extensions: list = [],
+        enable_queries:bool=True,
+        enable_put_mutations: bool = True,
+        enable_delete_mutations:bool = True,
         **kwargs,
     ):
-        functions:Dict[str, tuple] = {}
+        functions: Dict[str, tuple] = {}
         Setup.setup(
             engine=engine,
             get_perm=permission_getter,
@@ -59,6 +70,12 @@ class GraphemyRouter(GraphQLRouter):
         need_mutation = True
         for cls in Setup.classes.values():
             set_schema(cls, functions)
+            if cls.__enable_query__ == None:
+                cls.__enable_query__ = enable_queries
+            if cls.__enable_put_mutation__== None:
+                cls.__enable_put_mutation__ = enable_put_mutations
+            if cls.__enable_delete_mutation__ == None:
+                cls.__enable_delete_mutation__ = enable_delete_mutations
             cls_query, cls_filter = get_query(cls)
             setattr(
                 sys.modules[__name__],
@@ -70,21 +87,21 @@ class GraphemyRouter(GraphQLRouter):
                 cls.__name__ + 'Filter',
                 cls_filter,
             )
-            if not cls.__disable_query__:
+            if cls.__enable_query__:
                 need_query = False
                 setattr(
                     query,
-                    cls.__query__,
+                    cls.__queryname__,
                     cls_query,
                 )
-            if cls.__put_mutation__:
+            if cls.__enable_put_mutation__:
                 need_mutation = False
                 setattr(
                     mutation,
                     'put_' + cls.__tablename__.lower(),
                     get_put_mutation(cls),
                 )
-            if cls.__delete_mutation__:
+            if cls.__enable_delete_mutation__:
                 need_mutation = False
                 setattr(
                     mutation,
@@ -101,7 +118,7 @@ class GraphemyRouter(GraphQLRouter):
         async def get_context(request: Request) -> dict:
             context = await context_getter(request) if context_getter else {}
             for k, (func, return_class) in functions.items():
-                context[k] = MyDataLoader(
+                context[k] = GraphemyDataLoader(
                     load_fn=func
                     if await Setup.get_permission(
                         return_class, context, 'query'
