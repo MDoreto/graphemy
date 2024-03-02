@@ -3,13 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 from strawberry.permission import BasePermission
+from typing import Dict
+from typing import TYPE_CHECKING
 
-
+if TYPE_CHECKING:
+    from .models import Graphemy
 class Setup:
     engine = None
-    get_permission = None
+    get_permission:callable = None
     async_engine = False
-    classes = {}
+    classes:Dict[str, "Graphemy"] = {}
 
     @classmethod
     async def execute_query(cls, query):
@@ -48,7 +51,7 @@ class Setup:
             cls.get_permission = get_permission
 
     @classmethod
-    def get_auth(cls, module, request_type):
+    def get_auth(cls, module:"Graphemy", request_type:str)-> BasePermission:
         class IsAuthenticated(BasePermission):
             async def has_permission(self, source, info, **kwargs) -> bool:
                 if not await module.permission_getter(

@@ -29,7 +29,9 @@ class MyDataLoader(DataLoader):
             if isinstance(keys, str)
             else keys
         )
+        print(filters)
         data = await super().load(dict_to_tuple(filters))
+        print("bbbbbb")
         if self.filter_method:
             data = self.filter_method(data, self.request)
         return data
