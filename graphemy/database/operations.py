@@ -1,17 +1,21 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, and_, extract, or_, select
-from typing import TYPE_CHECKING
-from..setup import Setup
-from .utils import get_filter, get_keys
-if TYPE_CHECKING:
-    from ..models import Graphemy,DateFilter
 
-engine = Setup.engine
+from ..setup import Setup
+from .utils import get_filter, get_keys
+
+if TYPE_CHECKING:
+    from ..models import DateFilter, Graphemy
 
 
 async def get_items(
-    model: 'Graphemy', parameters: list[tuple], id: str | list[str]='id', many:bool=True
+    model: 'Graphemy',
+    parameters: list[tuple],
+    id: str | list[str] = 'id',
+    many: bool = True,
 ):
     groups = {}
     id_groups = {}
@@ -55,7 +59,7 @@ async def get_items(
             and_(*filter_temp, get_filter(model, filters[f], id, params, i))
         )
     results = await Setup.execute_query(
-        query.where(or_(*query_filters)).params(**params)
+        query.where(or_(*query_filters)).params(**params), model.__enginename__
     )
     for r in results:
         temp = id_groups[get_keys(r, id)]
@@ -95,14 +99,14 @@ async def get_all(model: 'Graphemy', filters, query_filter):
                     query = query.where(getattr(model, k) <= (v.range[1]))
             elif filters[k]:
                 query = query.where(getattr(model, k).in_(filters[k]))
-    r = await Setup.execute_query(query)
+    r = await Setup.execute_query(query, model.__enginename__)
     return r
 
 
-async def put_item(model: 'Graphemy', item, id='id', engine=engine):
+async def put_item(model: 'Graphemy', item, id='id'):
     id = [getattr(item, i) for i in id]
     kwargs = vars(item)
-    engine = Setup.engine
+    engine = Setup.engine[model.__enginename__]
     if Setup.async_engine:
         async_session = sessionmaker(
             engine, class_=AsyncSession, expire_on_commit=False
@@ -135,9 +139,9 @@ async def put_item(model: 'Graphemy', item, id='id', engine=engine):
     return new_item
 
 
-async def delete_item(model: 'Graphemy', item, id='id', engine=engine):
+async def delete_item(model: 'Graphemy', item, id='id'):
     id = [getattr(item, i) for i in id]
-    engine = Setup.engine
+    engine = Setup.engine[model.__enginename__]
     if Setup.async_engine:
         async_session = sessionmaker(
             engine, class_=AsyncSession, expire_on_commit=False

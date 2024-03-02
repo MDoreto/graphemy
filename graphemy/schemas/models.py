@@ -1,5 +1,7 @@
-import strawberry
 from datetime import date
+
+import strawberry
+
 
 @strawberry.input
 class DateFilter:
