@@ -14,13 +14,13 @@ class Graphemy(SQLModel):
     __enable_query__: bool | None = None
     __queryname__: str = ''
     __enginename__: str = 'default'
-    
+
     class Strawberry:
         pass
 
     def __init_subclass__(cls):
-        cls.__query__ = (
-            cls.__query__ if cls.__query__ else cls.__tablename__ + 's'
+        cls.__queryname__ = (
+            cls.__queryname__ if cls.__queryname__ else cls.__tablename__ + 's'
         )
         Setup.classes[cls.__name__] = cls
         to_remove = []
