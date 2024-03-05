@@ -4,11 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, and_, extract, or_, select
 
+from ..schemas.models import DateFilter
 from ..setup import Setup
 from .utils import get_filter, get_keys
 
 if TYPE_CHECKING:
-    from ..models import DateFilter, Graphemy
+    from ..models import Graphemy
 
 
 async def get_items(

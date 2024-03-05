@@ -1,16 +1,16 @@
 import inspect
 import sys
 from types import GenericAlias
-from typing import Dict,Callable
+from typing import Callable, Dict
 
 import strawberry
 from fastapi import Request
 from graphql.error import GraphQLError
 from graphql.error.graphql_error import format_error as format_graphql_error
+from sqlalchemy.engine.base import Engine
 from strawberry.fastapi import GraphQLRouter
 from strawberry.http import GraphQLHTTPResponse
 from strawberry.types import ExecutionResult
-from sqlalchemy.engine.base import Engine
 
 from .dl import GraphemyDataLoader
 from .schemas.generators import (
@@ -53,11 +53,11 @@ class GraphemyRouter(GraphQLRouter):
         permission_getter: Callable | None = None,
         dl_filter: Callable | None = None,
         query_filter: Callable | None = None,
-        engine:Engine | Dict[str, Engine]=None,
+        engine: Engine | Dict[str, Engine] = None,
         extensions: list = [],
-        enable_queries:bool=True,
+        enable_queries: bool = True,
         enable_put_mutations: bool = True,
-        enable_delete_mutations:bool = True,
+        enable_delete_mutations: bool = True,
         **kwargs,
     ):
         functions: Dict[str, tuple] = {}
@@ -72,7 +72,7 @@ class GraphemyRouter(GraphQLRouter):
             set_schema(cls, functions)
             if cls.__enable_query__ == None:
                 cls.__enable_query__ = enable_queries
-            if cls.__enable_put_mutation__== None:
+            if cls.__enable_put_mutation__ == None:
                 cls.__enable_put_mutation__ = enable_put_mutations
             if cls.__enable_delete_mutation__ == None:
                 cls.__enable_delete_mutation__ = enable_delete_mutations

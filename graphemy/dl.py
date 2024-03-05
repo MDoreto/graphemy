@@ -9,10 +9,10 @@ class Dl:
 
     def __init__(self, source: str | list[str], target: str | list[str]):
         if type(source) != type(target):
-            raise "source and target must have same type"
+            raise 'source and target must have same type'
         if type(source) == list:
             if len(source) != len(target):
-                raise "source and target must have same length"
+                raise 'source and target must have same length'
             ids = {}
             for i, id in enumerate(target):
                 ids[id] = source[i]
