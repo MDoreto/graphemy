@@ -56,8 +56,8 @@ class GraphemyRouter(GraphQLRouter):
         engine: Engine | Dict[str, Engine] = None,
         extensions: list = [],
         enable_queries: bool = True,
-        enable_put_mutations: bool = True,
-        enable_delete_mutations: bool = True,
+        enable_put_mutations: bool = False,
+        enable_delete_mutations: bool = False,
         **kwargs,
     ):
         functions: Dict[str, tuple] = {}

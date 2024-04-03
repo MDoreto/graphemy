@@ -11,3 +11,10 @@ def client():
     Setup.setup(engine=engine)
 
     return TestClient(app)
+
+
+def check(client, query, result, code=None):
+    response = client.post('/graphql', json={'query': query})
+    assert response.json() == result
+    if code:
+        assert response.status_code == code

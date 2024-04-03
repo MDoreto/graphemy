@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphemy"
-version = "0.3.4"
+version = "1.0.0-beta.1"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
 readme = "README.md"
@@ -64,7 +64,7 @@ profile = "black"
 line_length = 79
 
 [tool.taskipy.tasks]
-example = "uvicorn examples.music.main:app --reload --port 8001"
+example = "uvicorn examples.tutorial.main:app --reload --port 8001"
 lint = "blue . && isort ."
 docs = "mkdocs serve"
 pre_test = "task lint"
