@@ -19,3 +19,22 @@ In this case the relationship `Music` -> `Album` will be done using field `album
 
 The Relationship `Album` -> `Music` will be done using field `id` of `Album` and field `album_id` of `Music`.
 
+/// note
+
+The relationship `Album` -> `Music` is `1 -> N`, in this case we use `list['TargetClass']` as type hint.
+
+///
+
+
+/// tip
+
+Source and Target parameters can receive a list too, this is useful when you have tables that need many keys to be linked, for example `album: 'Album' = Dl(source=['album_id', 'year'], target=['id', 'year'])`
+
+///
+
+### Run query
+
+Now in our debugger we can see nested schemas
+
+
+![strawberry relationship](/assets/relationship.png){ width="800" .center}

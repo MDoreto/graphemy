@@ -16,10 +16,10 @@ def test_query(client):
                 }"""
     result = {
         'data': {
-            'albums': [{'bandId': 1, 'id': 1, 'name': 'Dust in the Wind'}],
+            'albums': [{'bandId': 1, 'id': 1, 'name': 'Leftoverture'}],
             'musics': [
-                {'albumId': 1, 'id': 1, 'name': 'Dust in the Wind'},
-                {'albumId': 1, 'id': 2, 'name': 'Carry on my Wayward'},
+                {'albumId': 1, 'id': 1, 'name': 'Carry on my Wayward'},
+                {'albumId': 1, 'id': 2, 'name': 'The Wall'},
             ],
         }
     }
@@ -28,7 +28,7 @@ def test_query(client):
 
 def test_filter(client):
     query = """query MyQuery {
-        musics(filters: {id: 2}) {
+        musics(filters: {id: 1}) {
             albumId
             id
             name
@@ -36,7 +36,53 @@ def test_filter(client):
         }"""
     result = {
         'data': {
-            'musics': [{'albumId': 1, 'id': 2, 'name': 'Carry on my Wayward'}]
+            'musics': [{'albumId': 1, 'id': 1, 'name': 'Carry on my Wayward'}]
         }
+    }
+    check(client, query, result)
+
+
+def test_insert(client):
+    query = """mutation MyMutation {
+  putMusic(params: {albumId: 1, name: "Miracles of Nowhere"}) {
+    albumId
+    id
+    name
+  }
+}"""
+    result = {
+        'data': {
+            'putMusic': {'albumId': 1, 'id': 3, 'name': 'Miracles of Nowhere'}
+        }
+    }
+    check(client, query, result)
+
+
+def test_update(client):
+    query = """mutation MyMutation {
+        putMusic(params: {id: 1, albumId: 1, name: "Miracles of Nowhere"}) {
+            albumId
+            id
+            name
+        }
+        }"""
+    result = {
+        'data': {
+            'putMusic': {'albumId': 1, 'id': 1, 'name': 'Miracles of Nowhere'}
+        }
+    }
+    check(client, query, result)
+
+
+def test_delete(client):
+    query = """mutation MyMutation {
+        deleteMusic(params: {id: 2}) {
+            albumId
+            id
+            name
+        }
+        }"""
+    result = {
+        'data': {'deleteMusic': {'albumId': 1, 'id': 2, 'name': 'The Wall'}}
     }
     check(client, query, result)
