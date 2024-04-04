@@ -3,22 +3,22 @@ from .fixture import check, client
 
 def test_relationship(client):
     query = """query MyQuery {
-  albums {
-    bandId
-    name
-    musics {
-      albumId
-      name
-    }
-  }
-  musics {
-    albumId
-    name
-    album {
-      name
-    }
-  }
-}"""
+                albums {
+                  bandId
+                  name
+                  musics {
+                    albumId
+                    name
+                  }
+                }
+                musics {
+                  albumId
+                  name
+                  album {
+                    name
+                  }
+                }
+              }"""
     result = {
         'data': {
             'albums': [
@@ -46,5 +46,4 @@ def test_relationship(client):
         }
     }
     response = client.post('/graphql', json={'query': query})
-    print(response.json())
     assert response.json() == result

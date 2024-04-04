@@ -38,3 +38,9 @@ Now in our debugger we can see nested schemas
 
 
 ![strawberry relationship](/assets/relationship.png){ width="800" .center}
+
+/// tip
+
+Nested fileds also have filters that can be used individually same the main query filters.
+
+///
