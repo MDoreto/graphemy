@@ -1,25 +1,50 @@
 from .fixture import check, client
 
-def test_query(client):
+
+def test_relationship(client):
     query = """query MyQuery {
-                    albums {
-                        bandId
-                        id
-                        name
-                    }
-                    musics {
-                        albumId
-                        id
-                        name
-                    }
-                }"""
+  albums {
+    bandId
+    name
+    musics {
+      albumId
+      name
+    }
+  }
+  musics {
+    albumId
+    name
+    album {
+      name
+    }
+  }
+}"""
     result = {
         'data': {
-            'albums': [{'bandId': 1, 'id': 1, 'name': 'Dust in the Wind'}],
+            'albums': [
+                {
+                    'bandId': 1,
+                    'name': 'Leftoverture',
+                    'musics': [
+                        {'albumId': 1, 'name': 'Miracles of Nowhere'},
+                        {'albumId': 1, 'name': 'Miracles of Nowhere'},
+                    ],
+                }
+            ],
             'musics': [
-                {'albumId': 1, 'id': 1, 'name': 'Dust in the Wind'},
-                {'albumId': 1, 'id': 2, 'name': 'Carry on my Wayward'},
+                {
+                    'albumId': 1,
+                    'name': 'Miracles of Nowhere',
+                    'album': {'name': 'Leftoverture'},
+                },
+                {
+                    'albumId': 1,
+                    'name': 'Miracles of Nowhere',
+                    'album': {'name': 'Leftoverture'},
+                },
             ],
         }
     }
-    check(client, query, result)
+    response = client.post('/graphql', json={'query': query})
+    print(response.json())
+    assert response.json() == result

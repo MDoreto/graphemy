@@ -7,4 +7,4 @@ class Music(Graphemy, table=True):
     album_id: int
     id: int = Field(primary_key=True)
     name: str
-    # album: 'Album' = Dl(source='album_id', target='id')
+    album: 'Album' = Dl(source='album_id', target='id')

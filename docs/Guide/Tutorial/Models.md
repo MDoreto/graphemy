@@ -71,3 +71,11 @@ Note that every query already have a filter option where you can filter results 
 
 For models that has the mutations enableds graphemy create the respective mutations.
 
+![strawberry put_mutation](/assets/put_mutation.png){ width="800" .center}
+
+
+/// note
+
+Put mutation can receive a id or not, if receive an id this endpoint will search for some item with this id and update it, if you don't put an id or it dont found some item with the inputed id, it will create a new item.
+
+///

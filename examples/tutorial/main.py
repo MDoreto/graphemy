@@ -21,9 +21,9 @@ app.include_router(graphql_app, prefix='/graphql')
 Graphemy.metadata.create_all(engine)
 
 with Session(engine) as session:
-    music1 = Music(name='Dust in the Wind', album_id=1)
-    music2 = Music(name='Carry on my Wayward', album_id=1)
-    album1 = Album(name='Dust in the Wind', band_id=1)
+    music1 = Music(name='Carry on my Wayward', album_id=1)
+    music2 = Music(name='The Wall', album_id=1)
+    album1 = Album(name='Leftoverture', band_id=1)
     session.add(music1)
     session.add(music2)
     session.add(album1)
