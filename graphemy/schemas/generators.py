@@ -107,6 +107,9 @@ def get_dl_function(
     ]
     if is_list:
         return_type = list[return_type]
+    
+    else:
+        return_type = Optional[return_type]
 
     async def loader_func(
         self,
