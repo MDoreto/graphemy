@@ -2,7 +2,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from sqlmodel import and_, bindparam, or_
-
+from sqlalchemy.sql.elements import BinaryExpression
 if TYPE_CHECKING:
     from ..models import Graphemy
 
@@ -22,7 +22,7 @@ def get_filter(
     id,
     params: dict,
     i: int,
-):
+) -> BinaryExpression:
     if isinstance(id, list):
         filter = []
         for j, key in enumerate(keys):
@@ -44,6 +44,9 @@ def get_filter(
     elif None in keys:
         keys.remove(None)
     params[f'p{i}'] = keys
+    a = getattr(model, id).in_(
+        bindparam(f'p{i}', expanding=True, literal_execute=True)
+    )
     return getattr(model, id).in_(
         bindparam(f'p{i}', expanding=True, literal_execute=True)
     )
