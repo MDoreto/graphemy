@@ -64,6 +64,7 @@ async def get_items(
     )
     for r in results:
         temp = id_groups[get_keys(r, id)]
+
         if len(temp) == 1:
             key = temp[0]
             if many:
@@ -76,9 +77,9 @@ async def get_items(
                     [getattr(r, k) in v for k, v in t[0][1] if v]
                 ):
                     if many:
-                        groups[key].append(r)
+                        groups[t].append(r)
                     else:
-                        groups[key] = r
+                        groups[t] = r
     return groups.values()
 
 
