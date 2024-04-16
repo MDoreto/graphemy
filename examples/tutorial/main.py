@@ -19,7 +19,7 @@ engine = create_engine(
 
 app = FastAPI()
 
-graphql_app = GraphemyRouter(engine=engine,auto_foreign_keys=True)
+graphql_app = GraphemyRouter(engine=engine, auto_foreign_keys=True)
 app.include_router(graphql_app, prefix='/graphql')
 
 

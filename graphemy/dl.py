@@ -6,9 +6,14 @@ from .schemas.models import DateFilter
 class Dl:
     source: str | list[str]
     target: str | list[str]
-    foreign_key: bool  = True
+    foreign_key: bool = True
 
-    def __init__(self, source: str | list[str], target: str | list[str],foreign_key: bool  = True):
+    def __init__(
+        self,
+        source: str | list[str],
+        target: str | list[str],
+        foreign_key: bool = True,
+    ):
         if type(source) != type(target):
             raise 'source and target must have same type'
         if type(source) == list:
