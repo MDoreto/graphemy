@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphemy"
-version = "1.0.0-beta.3"
+version = "1.0.0-beta.4"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
 readme = "README.md"
@@ -71,3 +71,4 @@ docs = "mkdocs serve"
 pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
 post_test = "coverage html"
+publish = "poetry publish --build"
