@@ -1,4 +1,6 @@
-from .fixture import check, client
+import pytest
+
+from .fixture import async_client, check, client
 
 
 def test_query(client):
@@ -86,3 +88,17 @@ def test_delete(client):
         'data': {'deleteMusic': {'albumId': 1, 'id': 2, 'name': 'The Wall'}}
     }
     check(client, query, result)
+
+
+# @pytest.mark.asyncio
+# async def test_async_insert(async_client):
+#     query = """mutation MyMutation {
+#   putItem(params: {name: "Music"}) {
+#     id
+#     name
+#   }
+# }"""
+#     result = {'data': {'putItem': {'id': 1, 'name': 'Music'}}}
+#     temp = await async_client
+#     response = temp.post('/graphql', json={'query': query})
+#     assert response.json() == result

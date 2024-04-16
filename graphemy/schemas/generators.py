@@ -62,8 +62,10 @@ def set_schema(
             cls.__table__.append_constraint(ForeignKeyConstraint(source, target))
             foreign_keys_info.append((source,target))
         if not attr.dl_name in functions:
-            functions[attr.dl_name] = (get_dl_field(
-                attr, returned_class), returned_class)
+            functions[attr.dl_name] = (
+                get_dl_field(attr, returned_class),
+                returned_class,
+            )
     extra_schema = strawberry.type(
         cls.Strawberry, name=f'{cls.__name__}Schema2'
     )
@@ -77,7 +79,7 @@ def set_schema(
     cls.__strawberry_schema__ = strawberry_schema
 
 
-def get_dl_field(attr, returned_class: "Graphemy"):
+def get_dl_field(attr, returned_class: 'Graphemy'):
     returned_schema = returned_class.__strawberry_schema__
     if attr.many:
         returned_schema = list[returned_schema]
@@ -87,9 +89,8 @@ def get_dl_field(attr, returned_class: "Graphemy"):
     async def dataloader(
         keys: list[tuple],
     ) -> returned_schema:
-        return await get_items(
-            returned_class, keys, attr.target, attr.many
-        )
+        return await get_items(returned_class, keys, attr.target, attr.many)
+
     dataloader.__name__ = attr.dl_name
     return dataloader
 
