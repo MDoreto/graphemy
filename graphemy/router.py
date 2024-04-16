@@ -58,6 +58,7 @@ class GraphemyRouter(GraphQLRouter):
         enable_queries: bool = True,
         enable_put_mutations: bool = False,
         enable_delete_mutations: bool = False,
+        auto_foreign_keys: bool = False,
         **kwargs,
     ):
         functions: Dict[str, tuple] = {}
@@ -69,7 +70,7 @@ class GraphemyRouter(GraphQLRouter):
         need_query = True
         need_mutation = True
         for cls in Setup.classes.values():
-            set_schema(cls, functions)
+            set_schema(cls, functions, auto_foreign_keys)
             if cls.__enable_query__ == None:
                 cls.__enable_query__ = enable_queries
             if cls.__enable_put_mutation__ == None:
