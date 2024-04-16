@@ -13,11 +13,12 @@ from typing import (
 )
 
 import strawberry
+from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy.inspection import inspect
 from strawberry.field import StrawberryField
 from strawberry.tools import merge_types
 from strawberry.types import Info
-from sqlalchemy import ForeignKeyConstraint
+
 from ..database.operations import delete_item, get_all, get_items, put_item
 from ..dl import Dl
 from ..setup import Setup
@@ -30,13 +31,16 @@ T = TypeVar('T')
 
 
 def set_schema(
-    cls: 'Graphemy', functions: Dict[str, Tuple[Callable, 'Graphemy']], auto_foreign_keys
+    cls: 'Graphemy',
+    functions: Dict[str, Tuple[Callable, 'Graphemy']],
+    auto_foreign_keys,
 ) -> None:
     """Set the Strawberry schema for a Graphemy class."""
 
     # Define a class to hold Strawberry schema fields
     class Schema:
         pass
+
     foreign_keys_info = []
     for attr in [
         attr for attr in cls.__dict__.values() if hasattr(attr, 'dl')
@@ -56,11 +60,17 @@ def set_schema(
             ),
         )
         if auto_foreign_keys and not attr.many and attr.foreign_key:
-            source = attr.source if isinstance(attr.source, list) else [attr.source]
-            target = attr.target if isinstance(attr.target, list) else [attr.target]
+            source = (
+                attr.source if isinstance(attr.source, list) else [attr.source]
+            )
+            target = (
+                attr.target if isinstance(attr.target, list) else [attr.target]
+            )
             target = [returned_class.__tablename__ + '.' + t for t in target]
-            cls.__table__.append_constraint(ForeignKeyConstraint(source, target))
-            foreign_keys_info.append((source,target))
+            cls.__table__.append_constraint(
+                ForeignKeyConstraint(source, target)
+            )
+            foreign_keys_info.append((source, target))
         if not attr.dl_name in functions:
             functions[attr.dl_name] = (
                 get_dl_field(attr, returned_class),

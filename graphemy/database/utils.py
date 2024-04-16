@@ -1,8 +1,9 @@
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlmodel import and_, bindparam, or_
 from sqlalchemy.sql.elements import BinaryExpression
+from sqlmodel import and_, bindparam, or_
+
 if TYPE_CHECKING:
     from ..models import Graphemy
 
