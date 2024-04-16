@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, create_engine, text
 from sqlmodel.pool import StaticPool
 
 from graphemy import Graphemy, GraphemyRouter
@@ -16,8 +16,9 @@ engine = create_engine(
 
 app = FastAPI()
 
-graphql_app = GraphemyRouter(engine=engine)
+graphql_app = GraphemyRouter(engine=engine,auto_foreign_keys=True)
 app.include_router(graphql_app, prefix='/graphql')
+
 
 Graphemy.metadata.create_all(engine)
 

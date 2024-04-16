@@ -6,8 +6,9 @@ from .schemas.models import DateFilter
 class Dl:
     source: str | list[str]
     target: str | list[str]
+    foreign_key: bool  = True
 
-    def __init__(self, source: str | list[str], target: str | list[str]):
+    def __init__(self, source: str | list[str], target: str | list[str],foreign_key: bool  = True):
         if type(source) != type(target):
             raise 'source and target must have same type'
         if type(source) == list:
@@ -20,6 +21,7 @@ class Dl:
             source = [ids[id] for id in target]
         self.source = source
         self.target = target
+        self.foreign_key = foreign_key
 
 
 class GraphemyDataLoader(DataLoader):

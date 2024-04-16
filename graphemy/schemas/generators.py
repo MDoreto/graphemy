@@ -17,7 +17,7 @@ from sqlalchemy.inspection import inspect
 from strawberry.field import StrawberryField
 from strawberry.tools import merge_types
 from strawberry.types import Info
-
+from sqlalchemy import ForeignKeyConstraint
 from ..database.operations import delete_item, get_all, get_items, put_item
 from ..dl import Dl
 from ..setup import Setup
@@ -30,14 +30,14 @@ T = TypeVar('T')
 
 
 def set_schema(
-    cls: 'Graphemy', functions: Dict[str, Tuple[Callable, 'Graphemy']]
+    cls: 'Graphemy', functions: Dict[str, Tuple[Callable, 'Graphemy']], auto_foreign_keys
 ) -> None:
     """Set the Strawberry schema for a Graphemy class."""
 
     # Define a class to hold Strawberry schema fields
     class Schema:
         pass
-
+    foreign_keys_info = []
     for attr in [
         attr for attr in cls.__dict__.values() if hasattr(attr, 'dl')
     ]:
@@ -55,8 +55,15 @@ def set_schema(
                 ],
             ),
         )
+        if auto_foreign_keys and not attr.many and attr.foreign_key:
+            source = attr.source if isinstance(attr.source, list) else [attr.source]
+            target = attr.target if isinstance(attr.target, list) else [attr.target]
+            target = [returned_class.__tablename__ + '.' + t for t in target]
+            cls.__table__.append_constraint(ForeignKeyConstraint(source, target))
+            foreign_keys_info.append((source,target))
         if not attr.dl_name in functions:
-            functions[attr.dl_name] = (get_dl_field(attr,returned_class ), returned_class)
+            functions[attr.dl_name] = (get_dl_field(
+                attr, returned_class), returned_class)
     extra_schema = strawberry.type(
         cls.Strawberry, name=f'{cls.__name__}Schema2'
     )
@@ -70,12 +77,13 @@ def set_schema(
     cls.__strawberry_schema__ = strawberry_schema
 
 
-def get_dl_field(attr,returned_class:"Graphemy"):
+def get_dl_field(attr, returned_class: "Graphemy"):
     returned_schema = returned_class.__strawberry_schema__
     if attr.many:
         returned_schema = list[returned_schema]
     else:
         returned_schema = Optional[returned_schema]
+
     async def dataloader(
         keys: list[tuple],
     ) -> returned_schema:
@@ -84,6 +92,7 @@ def get_dl_field(attr,returned_class:"Graphemy"):
         )
     dataloader.__name__ = attr.dl_name
     return dataloader
+
 
 def get_dl_function(
     field_name: str,
@@ -110,7 +119,7 @@ def get_dl_function(
     ]
     if is_list:
         return_type = list[return_type]
-    
+
     else:
         return_type = Optional[return_type]
 
@@ -139,6 +148,8 @@ def get_dl_function(
     loader_func.dl = class_type
     loader_func.many = is_list
     loader_func.target = field_value.target
+    loader_func.source = field_value.source
+    loader_func.foreign_key = field_value.foreign_key
     loader_func.dl_name = dl_name
 
     return loader_func
