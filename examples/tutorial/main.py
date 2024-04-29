@@ -8,8 +8,10 @@ from graphemy import Graphemy, GraphemyRouter
 
 from .models.album import Album
 from .models.band import Band
+from .models.event import Event
 from .models.member import Member
 from .models.music import Music
+from .models.presentation import Presentation
 
 engine = create_engine(
     'sqlite://',
@@ -43,6 +45,9 @@ with Session(engine) as session:
     )
     band1 = Band(name='kansas')
     band2 = Band(name='the band')
+
+    presentation = Presentation(album_id=1, year=2012, name='Dust in the Wind')
+    event = Event(name='Rock in Rio', album_id=1, year=2012)
     session.add(music1)
     session.add(music2)
     session.add(album1)
@@ -50,4 +55,6 @@ with Session(engine) as session:
     session.add(member2)
     session.add(band1)
     session.add(band2)
+    session.add(presentation)
+    session.add(event)
     session.commit()

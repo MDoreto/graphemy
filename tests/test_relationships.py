@@ -1,6 +1,45 @@
 from .fixture import check, client
 
 
+def test_relationship_compost(client):
+    query = """query MyQuery {
+        events {
+          albumId
+          name
+          year
+          presentations {
+            albumId
+            name
+            year
+            event {
+              name
+            }
+          }
+        }
+      }"""
+    result = {
+        'data': {
+            'events': [
+                {
+                    'albumId': 1,
+                    'name': 'Rock in Rio',
+                    'year': 2012,
+                    'presentations': [
+                        {
+                            'albumId': 1,
+                            'name': 'Dust in the Wind',
+                            'year': 2012,
+                            'event': {'name': 'Rock in Rio'},
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    response = client.post('/graphql', json={'query': query})
+    assert response.json() == result
+
+
 def test_relationship(client):
     query = """query MyQuery {
                 albums {
