@@ -59,7 +59,9 @@ def set_schema(
                 ],
             ),
         )
-        if auto_foreign_keys and not attr.many and attr.foreign_key:
+        if attr.foreign_key or (
+            attr.foreign_key == None and auto_foreign_keys and not attr.many
+        ):
             source = (
                 attr.source if isinstance(attr.source, list) else [attr.source]
             )
@@ -89,7 +91,7 @@ def set_schema(
     cls.__strawberry_schema__ = strawberry_schema
 
 
-def get_dl_field(attr, returned_class: 'Graphemy'):
+def get_dl_field(attr, returned_class: 'Graphemy') -> callable:
     returned_schema = returned_class.__strawberry_schema__
     if attr.many:
         returned_schema = list[returned_schema]

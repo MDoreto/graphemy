@@ -26,7 +26,7 @@ Lets create another class for our albums.
 Then, create a router based on this query and import it in a fastapi app.
 
 ```Python
-{!./examples/tutorial/main.py[ln:1-22]!}
+{!./examples/tutorial/main.py[ln:1-25]!}
 ```
 <details>
 <summary>👀 Full file preview</summary>
@@ -40,7 +40,7 @@ Then, create a router based on this query and import it in a fastapi app.
 Add some records to get in our api.
 
 ```Python
-{!./examples/tutorial/main.py[ln:22-31]!}
+{!./examples/tutorial/main.py[ln:27-60]!}
 ```
 <details>
 <summary>👀 Full file preview</summary>

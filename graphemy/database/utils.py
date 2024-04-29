@@ -19,8 +19,8 @@ def get_keys(model: 'Graphemy', id: str | list[str]) -> tuple | str:
 
 def get_filter(
     model: 'Graphemy',
-    keys,
-    id,
+    keys: tuple,
+    id: str | list[str],
     params: dict,
     i: int,
 ) -> BinaryExpression:
