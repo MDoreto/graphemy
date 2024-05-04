@@ -31,7 +31,7 @@ def get_filter(
             if None not in key:
                 for k in range(len(id)):
                     f.append(
-                        getattr(model, id[k])
+                        id[k][1:] if id[k].startswith('_') else  getattr(model, id[k])
                         == bindparam(
                             f'p{i}_{j}_{k}',
                             literal_execute=not isinstance(key[k], date),
