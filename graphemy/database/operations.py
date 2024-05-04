@@ -83,7 +83,7 @@ async def get_items(
     return groups.values()
 
 
-async def get_all(model: 'Graphemy', filters, query_filter):
+async def get_all(model: 'Graphemy', filters, query_filter) -> list:
     query = select(model).where(query_filter)
     if filters:
         filters = vars(filters)
