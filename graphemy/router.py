@@ -23,26 +23,75 @@ from .setup import Setup
 
 
 async def fake_dl_one(keys):
+    """
+    A placeholder asynchronous function that simulates fetching single items for each key.
+    Args:
+        keys (iterable): A collection of keys for which data needs to be fetched.
+    Returns:
+        An iterable of None values corresponding to each key.
+    """
     return {k: None for k in keys}.values()
 
 
 async def fake_dl_list(keys):
+    """
+    A placeholder asynchronous function that simulates fetching lists of items for each key.
+    Args:
+        keys (iterable): A collection of keys for which data needs to be fetched.
+    Returns:
+        An iterable of empty lists corresponding to each key.
+    """
     return {k: [] for k in keys}.values()
 
 
 class Query:
+    """
+    A class used as a container for defining GraphQL queries. All the resolvers associated
+    with fetching data are attached to instances of this class or its subclasses.
+    """
+
     pass
 
 
 class Mutation:
+    """
+    A class used as a container for defining GraphQL mutations. It contains methods that
+    alter data state in the database, typically involving create, update, and delete operations.
+    """
+
     pass
 
 
 async def hello_world(self, info) -> str:
+    """
+    A simple resolver function returning a greeting message.
+    Returns:
+        A string greeting 'Hello World'.
+    """
     return 'Hello World'
 
 
 class GraphemyRouter(GraphQLRouter):
+    """
+    A custom router class that sets up a GraphQL API using schemas generated from SQLModel classes.
+    It handles dynamic query and mutation generation, permissions, and context setup for each request.
+
+    Args:
+        query (object): A class containing GraphQL query resolvers.
+        mutation (object): A class containing GraphQL mutation resolvers.
+        context_getter (Callable): A function to get additional context for each request.
+        permission_getter (Callable): A function to determine permissions for operations.
+        dl_filter (Callable): A function to apply filters to data loaders.
+        query_filter (Callable): A function to apply filters to queries.
+        engine (Engine | Dict[str, Engine]): Database engine(s) used for SQL operations.
+        extensions (list): List of Strawberry extensions to be applied to the schema.
+        enable_queries (bool): Flag to enable query generation.
+        enable_put_mutations (bool): Flag to enable PUT mutations.
+        enable_delete_mutations (bool): Flag to enable DELETE mutations.
+        auto_foreign_keys (bool): Flag to automatically handle foreign keys.
+        **kwargs: Additional keyword arguments passed to the base GraphQLRouter.
+    """
+
     functions = []
 
     def __init__(
@@ -145,6 +194,14 @@ class GraphemyRouter(GraphQLRouter):
     async def process_result(
         self, request: Request, result: ExecutionResult
     ) -> GraphQLHTTPResponse:
+        """
+        Processes the GraphQL execution result, formatting errors and managing permissions.
+        Args:
+            request (Request): The incoming HTTP request.
+            result (ExecutionResult): The result from executing a GraphQL operation.
+        Returns:
+            GraphQLHTTPResponse: The formatted response to be returned to the client.
+        """
         data: GraphQLHTTPResponse = {'data': result.data}
         errors = []
         if 'errors' in request.scope:

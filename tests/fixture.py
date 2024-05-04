@@ -30,7 +30,7 @@ async def async_client():
 
     engine = create_async_engine(
         'sqlite+aiosqlite:///:memory:',
-        echo=False,  # Defina como False se não quiser log de SQL
+        echo=False,
     )
 
     class Item(Graphemy, table=True):
