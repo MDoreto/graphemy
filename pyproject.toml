@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphemy"
-version = "1.0.0-rc.5"
+version = "1.0.0-rc.6"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
 readme = "README.md"
