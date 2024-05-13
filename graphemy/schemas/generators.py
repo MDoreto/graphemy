@@ -148,7 +148,7 @@ def get_dl_function(
         """The dynamically generated DataLoader function."""
         filter_args = vars(filters) if filters else None
         source_value = (
-            [ attr[1:] if attr.startswith('_') else  getattr(self, attr) for attr in field_value.source]
+            [ attr if type(attr) == int else attr[1:] if attr.startswith('_') else  getattr(self, attr) for attr in field_value.source]
             if isinstance(field_value.source, list)
             else getattr(self, field_value.source)
         )
