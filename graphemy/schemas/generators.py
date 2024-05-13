@@ -69,10 +69,14 @@ def set_schema(
                 attr.target if isinstance(attr.target, list) else [attr.target]
             )
             target = [returned_class.__tablename__ + '.' + t for t in target]
-            cls.__table__.append_constraint(
-                ForeignKeyConstraint(source, target)
-            )
-            foreign_keys_info.append((source, target))
+            filtered_pairs = [(s, t) for s, t in zip(source, target) if not (isinstance(s, int) or s.startswith('_') or isinstance(t, int) or t.startswith('_'))]
+            source, target = zip(*filtered_pairs) if filtered_pairs else ([], [])
+            
+            if len(source)>0 and len(target)>0:
+                cls.__table__.append_constraint(
+                    ForeignKeyConstraint(source, target)
+                )
+                foreign_keys_info.append((source, target))
         if not attr.dl_name in functions:
             functions[attr.dl_name] = (
                 get_dl_field(attr, returned_class),
