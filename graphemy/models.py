@@ -76,5 +76,5 @@ class Graphemy(SQLModel):
         for attr in to_remove:
             del cls.__annotations__[attr]
 
-    async def permission_getter(info: Info) -> bool:
+    async def permission_getter(info: Info, request_type: str) -> bool:
         return True

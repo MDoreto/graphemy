@@ -4,7 +4,7 @@ from types import GenericAlias
 from typing import Callable, Dict
 
 import strawberry
-from fastapi import Request
+from fastapi import Request, Response
 from graphql.error import GraphQLError
 from graphql.error.graphql_error import format_error as format_graphql_error
 from sqlalchemy.engine.base import Engine
@@ -165,8 +165,12 @@ class GraphemyRouter(GraphQLRouter):
                 strawberry.field(hello_world),
             )
 
-        async def get_context(request: Request) -> dict:
-            context = await context_getter(request) if context_getter else {}
+        async def get_context(request: Request, response: Response) -> dict:
+            context = (
+                await context_getter(request, response)
+                if context_getter
+                else {}
+            )
             for k, (func, return_class) in functions.items():
                 context[k] = GraphemyDataLoader(
                     load_fn=func
