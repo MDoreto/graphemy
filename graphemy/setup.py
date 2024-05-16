@@ -109,7 +109,7 @@ class Setup:
         class IsAuthenticated(BasePermission):
             async def has_permission(self, source, info, **kwargs) -> bool:
                 if not await module.permission_getter(
-                    info
+                    info, request_type
                 ) or not await cls.get_permission(
                     module, info.context, request_type
                 ):

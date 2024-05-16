@@ -69,10 +69,21 @@ def set_schema(
                 attr.target if isinstance(attr.target, list) else [attr.target]
             )
             target = [returned_class.__tablename__ + '.' + t for t in target]
-            filtered_pairs = [(s, t) for s, t in zip(source, target) if not (isinstance(s, int) or s.startswith('_') or isinstance(t, int) or t.startswith('_'))]
-            source, target = zip(*filtered_pairs) if filtered_pairs else ([], [])
-            
-            if len(source)>0 and len(target)>0:
+            filtered_pairs = [
+                (s, t)
+                for s, t in zip(source, target)
+                if not (
+                    isinstance(s, int)
+                    or s.startswith('_')
+                    or isinstance(t, int)
+                    or t.startswith('_')
+                )
+            ]
+            source, target = (
+                zip(*filtered_pairs) if filtered_pairs else ([], [])
+            )
+
+            if len(source) > 0 and len(target) > 0:
                 cls.__table__.append_constraint(
                     ForeignKeyConstraint(source, target)
                 )
@@ -152,7 +163,14 @@ def get_dl_function(
         """The dynamically generated DataLoader function."""
         filter_args = vars(filters) if filters else None
         source_value = (
-            [ attr if type(attr) == int else attr[1:] if attr.startswith('_') else  getattr(self, attr) for attr in field_value.source]
+            [
+                attr
+                if type(attr) == int
+                else attr[1:]
+                if attr.startswith('_')
+                else getattr(self, attr)
+                for attr in field_value.source
+            ]
             if isinstance(field_value.source, list)
             else getattr(self, field_value.source)
         )
@@ -193,7 +211,7 @@ def get_query(cls: 'Graphemy') -> StrawberryField:
         self, info: Info, filters: filter | None = None
     ) -> list[cls.__strawberry_schema__]:
         if not await cls.permission_getter(
-            info
+            info, 'query'
         ) or not await Setup.get_permission(cls, info.context, 'query'):
             return []
         data = await get_all(cls, filters, Setup.query_filter(cls, info))
