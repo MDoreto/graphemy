@@ -1,3 +1,5 @@
+import re
+
 from sqlmodel import SQLModel
 from strawberry.type import StrawberryType
 from strawberry.types import Info
@@ -59,6 +61,9 @@ class Graphemy(SQLModel):
         pass
 
     def __init_subclass__(cls):
+        cls.__tablename__ = re.sub(
+            r'(?<!^)(?=[A-Z])', '_', cls.__name__
+        ).lower()
         cls.__queryname__ = (
             cls.__queryname__ if cls.__queryname__ else cls.__tablename__ + 's'
         )
