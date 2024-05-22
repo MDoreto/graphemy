@@ -4,6 +4,9 @@ from types import GenericAlias
 from typing import Callable, Dict
 
 import strawberry
+import strawberry.tools
+import strawberry.utils
+import strawberry.utils.typing
 from fastapi import Request, Response
 from graphql.error import GraphQLError
 from graphql.error.graphql_error import format_error as format_graphql_error
@@ -44,22 +47,29 @@ async def fake_dl_list(keys):
     return {k: [] for k in keys}.values()
 
 
-class Query:
-    """
-    A class used as a container for defining GraphQL queries. All the resolvers associated
-    with fetching data are attached to instances of this class or its subclasses.
-    """
+def genre_empty_query():
+    class Query:
+        """
+        A class used as a container for defining GraphQL queries. All the resolvers associated
+        with fetching data are attached to instances of this class or its subclasses.
+        """
 
-    pass
+        pass
+
+    return Query
 
 
-class Mutation:
-    """
-    A class used as a container for defining GraphQL mutations. It contains methods that
-    alter data state in the database, typically involving create, update, and delete operations.
-    """
+def genre_empty_mutation():
+    class Mutation:
+        __auto_generated__ = True
+        """
+        A class used as a container for defining GraphQL mutations. It contains methods that
+        alter data state in the database, typically involving create, update, and delete operations.
+        """
 
-    pass
+        pass
+
+    return Mutation
 
 
 async def hello_world(self, info) -> str:
@@ -96,8 +106,8 @@ class GraphemyRouter(GraphQLRouter):
 
     def __init__(
         self,
-        query: object = Query,
-        mutation: object = Mutation,
+        query: object | None = None,
+        mutation: object | None = None,
         context_getter: Callable | None = None,
         permission_getter: Callable | None = None,
         dl_filter: Callable | None = None,
@@ -110,6 +120,10 @@ class GraphemyRouter(GraphQLRouter):
         auto_foreign_keys: bool = False,
         **kwargs,
     ):
+        if not query:
+            query = genre_empty_query()
+        if not mutation:
+            mutation = genre_empty_mutation()
         functions: Dict[str, tuple] = {}
         Setup.setup(
             engine=engine,
@@ -189,7 +203,7 @@ class GraphemyRouter(GraphQLRouter):
         schema = strawberry.Schema(
             query=strawberry.type(query),
             mutation=None
-            if need_mutation and mutation == Mutation
+            if need_mutation and hasattr(mutation, '__auto_generated__')
             else strawberry.type(mutation),
             extensions=extensions,
         )

@@ -41,6 +41,7 @@ pytest-asyncio = "^0.21.1"
 httpx = "^0.25.0"
 pytest-env = "^1.1.1"
 aiosqlite = "^0.20.0"
+gevent = "^24.2.1"
 
 
 [tool.poetry.group.doc.dependencies]
@@ -57,8 +58,9 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 pythonpath = "."
-addopts = "--doctest-modules"
 
+[tool.coverage.run]
+concurrency = ["thread","gevent"]
 
 [tool.isort]
 profile = "black"
@@ -72,3 +74,8 @@ pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
 post_test = "coverage html"
 publish = "poetry publish --build"
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    ]

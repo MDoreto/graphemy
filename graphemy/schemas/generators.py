@@ -36,7 +36,6 @@ def set_schema(
     auto_foreign_keys,
 ) -> None:
     """Set the Strawberry schema for a Graphemy class."""
-
     # Define a class to hold Strawberry schema fields
     class Schema:
         pass
@@ -93,17 +92,18 @@ def set_schema(
                 get_dl_field(attr, returned_class),
                 returned_class,
             )
-    extra_schema = strawberry.type(
-        cls.Strawberry, name=f'{cls.__name__}Schema2'
-    )
-    strawberry_schema = strawberry.experimental.pydantic.type(
-        cls, all_fields=True, name=f'{cls.__name__}Schema'
-    )(Schema)
-    if extra_schema.__annotations__:
-        strawberry_schema = merge_types(
-            f'{cls.__name__}Schema', (strawberry_schema, extra_schema)
+    if not cls.__strawberry_schema__:
+        extra_schema = strawberry.type(
+            cls.Strawberry, name=f'{cls.__name__}Schema2'
         )
-    cls.__strawberry_schema__ = strawberry_schema
+        strawberry_schema = strawberry.experimental.pydantic.type(
+            cls, all_fields=True, name=f'{cls.__name__}Schema'
+        )(Schema)
+        if extra_schema.__annotations__:
+            strawberry_schema = merge_types(
+                f'{cls.__name__}Schema', (strawberry_schema, extra_schema)
+            )
+        cls.__strawberry_schema__ = strawberry_schema
 
 
 def get_dl_field(attr, returned_class: 'Graphemy') -> callable:
@@ -226,7 +226,6 @@ def get_query(cls: 'Graphemy') -> StrawberryField:
 
 
 def get_put_mutation(cls: 'Graphemy') -> StrawberryField:
-
     pk = [pk.name for pk in inspect(cls).primary_key]
 
     class Filter:
