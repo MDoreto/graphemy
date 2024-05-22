@@ -67,9 +67,7 @@ class GraphemyDataLoader(DataLoader):
         self.request = request
         super().__init__(**kwargs)
 
-    async def load(self, keys, filters: dict | None = False):
-        if filters == False:
-            return await super().load(keys)
+    async def load(self, keys, filters: dict | None):
         filters['keys'] = (
             tuple(keys)
             if isinstance(keys, list)

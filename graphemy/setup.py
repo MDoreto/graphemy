@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session
+from sqlmodel import Session, SQLModel
 from strawberry.permission import BasePermission
 
 if TYPE_CHECKING:
@@ -70,12 +70,13 @@ class Setup:
             get_perm (callable): A function to determine if a request is permitted.
             query_filter (callable): A function to filter queries based on specific conditions.
         """
-        if engine and 'async' in engine.__module__:
-            cls.async_engine = True
+
         if isinstance(engine, Dict):
             cls.engine = engine
         else:
             cls.engine = {'default': engine}
+        if engine and 'async' in cls.engine['default'].__module__:
+            cls.async_engine = True
         if query_filter:
             cls.query_filter = query_filter
         else:
