@@ -1,11 +1,17 @@
-![project's logo](assets/logo.png){ width="300" .center}
+
+<p align="center">
+  <img src="./docs/assets/logo.png" />
+</p>
+
 # GRAPHEMY
 <p align="center">
     <em>Integrating SQLModel and Strawberry, providing a seamless GraphQL integration with Databases easy and fast.</em>
 </p>
+
 [![Documentation Status](https://readthedocs.org/projects/graphemy/badge/?version=latest)](https://graphemy.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/MDoreto/graphemy/graph/badge.svg?token=GJDMVBA425)](https://codecov.io/gh/MDoreto/graphemy)
 ![CI](https://github.com/MDoreto/graphemy/actions/workflows/pipeline.yml/badge.svg)
+
 <a href="https://pypi.org/project/graphemy" target="_blank">
     <img src="https://img.shields.io/pypi/v/graphemy?color=%2334D058&label=pypi%20package" alt="Package version">
 </a>
