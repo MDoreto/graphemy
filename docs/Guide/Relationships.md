@@ -47,7 +47,7 @@ Here graphemy will search a row of `SomeClass` that has:
 Now in our debugger we can see nested schemas
 
 
-![strawberry relationship](/assets/relationship.png){ width="800" .center}
+![strawberry relationship](../assets/relationship.png){ width="800" .center}
 
 /// tip
 

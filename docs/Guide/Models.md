@@ -18,7 +18,7 @@ First, create classes to represent our database tables.
 
 `Graphemy` class inherit `SQLModel` class. For more details: [SQLModel](https://sqlmodel.tiangolo.com/).
 
-All params of `Graphemy` are in [Model API](/api/Models/)
+All params of `Graphemy` are in [Model API](../api/Models.md)
 
 ///
 
@@ -43,7 +43,7 @@ Then, create a router based on this query and import it in a fastapi app.
 
 You can pass a dict to engine in `GraphemyRouter` to use tables of differents databases in the same api, in this case you need to set `__enginename__` attribute of your `Graphemy` models. (Default `__enginename__` value is `'default'`).
 
-All params of `GraphemyRouter` are in [Router API](/api/Router/)
+All params of `GraphemyRouter` are in [Router API](../api/Router.md)
 
 
 ///
@@ -68,11 +68,11 @@ Run `uvicorn main:app` in the project's folder and access `localhost:8000/graphq
 
 Now you have queries, put and delete mutations for both classes created
 
-![strawberry basic_query](/assets/put_mutation.png){ width="800" .center}
+![strawberry basic_query](../assets/put_mutation.png){ width="800" .center}
 
 Note that every query already have a filter option where you can filter results by every column.
 
-![strawberry query_filter](/assets/basic_query.png){ width="800" .center}
+![strawberry query_filter](../assets/basic_query.png){ width="800" .center}
 
 
 
