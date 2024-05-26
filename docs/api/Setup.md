@@ -20,4 +20,4 @@ Details:
     - Permissions for GraphQL operations are handled dynamically, with the ability to enforce custom
       logic defined at runtime.
 
-::: Setup
+::: graphemy.setup
