@@ -54,7 +54,7 @@ class GraphemyDataLoader(DataLoader):
     Attributes:
         filter_method (callable): A method that applies additional filtering to the data
             based on the request context and specified filters.
-        request: The context of the request, used to pass additional parameters to the
+        context: The context of the request, used to pass additional parameters to the
             filter_method.
 
     Methods:
@@ -62,9 +62,9 @@ class GraphemyDataLoader(DataLoader):
             DataLoader's functionality to cater to complex querying needs.
     """
 
-    def __init__(self, filter_method=None, request=None, **kwargs):
+    def __init__(self, filter_method=None, context: dict = None, **kwargs):
         self.filter_method = filter_method
-        self.request = request
+        self.context = context
         super().__init__(**kwargs)
 
     async def load(self, keys, filters: dict | None):
@@ -77,7 +77,7 @@ class GraphemyDataLoader(DataLoader):
         )
         data = await super().load(dict_to_tuple(filters))
         if self.filter_method:
-            data = self.filter_method(data, self.request)
+            data = self.filter_method(data, self.context)
         return data
 
 

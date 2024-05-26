@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Callable, Dict
 
+import strawberry
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -26,7 +27,7 @@ class Setup:
     """
 
     engine: Dict[str, Engine] = None
-    get_permission: callable = None
+    permission_getter: Callable
     async_engine = False
     classes: Dict[str, 'Graphemy'] = {}
 
@@ -59,7 +60,7 @@ class Setup:
     def setup(
         cls,
         engine: Dict[str, Engine] | Engine,
-        get_perm=None,
+        permission_getter=None,
         query_filter=None,
     ):
         """
@@ -85,14 +86,39 @@ class Setup:
                 return True
 
             cls.query_filter = query_filter_default
-        if get_perm:
-            cls.get_permission = get_perm
+        if permission_getter:
+            cls.permission_getter = permission_getter
         else:
 
-            async def get_permission(module_class, context, type):
+            async def permission_getter(module_class, info, type):
                 return True
 
-            cls.get_permission = get_permission
+            cls.permission_getter = permission_getter
+
+    @classmethod
+    async def has_permission(
+        cls, module: 'Graphemy', context: dict, request_type: str
+    ) -> bool:
+        """
+        Determines if a user has permission to execute a GraphQL query or mutation based on the
+        provided context and request type.
+
+        Args:
+            module ('Graphemy'): The model class for which permissions are being checked.
+            context: The context of the GraphQL request.
+            request_type (str): The type of request (e.g., 'query' or 'mutation') to determine the appropriate permissions.
+
+        Returns:
+            A boolean indicating if the user has permission to execute the request.
+        """
+        permission = await module.permission_getter(context, request_type)
+        if isinstance(permission, bool):
+            return permission
+        else:
+            permission = await cls.permission_getter(
+                module, context, request_type
+            )
+        return permission
 
     @classmethod
     def get_auth(cls, module: 'Graphemy', request_type: str) -> BasePermission:
@@ -108,10 +134,10 @@ class Setup:
         """
 
         class IsAuthenticated(BasePermission):
-            async def has_permission(self, source, info, **kwargs) -> bool:
-                if not await module.permission_getter(
-                    info, request_type
-                ) or not await cls.get_permission(
+            async def has_permission(
+                self, source, info: strawberry.Info, **kwargs
+            ) -> bool:
+                if not await cls.has_permission(
                     module, info.context, request_type
                 ):
                     info.context['response'].status_code = 403
