@@ -127,7 +127,7 @@ class GraphemyRouter(GraphQLRouter):
         functions: Dict[str, tuple] = {}
         Setup.setup(
             engine=engine,
-            get_perm=permission_getter,
+            permission_getter=permission_getter,
             query_filter=query_filter,
         )
         need_query = True
@@ -188,7 +188,7 @@ class GraphemyRouter(GraphQLRouter):
             for k, (func, return_class) in functions.items():
                 context[k] = GraphemyDataLoader(
                     load_fn=func
-                    if await Setup.get_permission(
+                    if await Setup.permission_getter(
                         return_class, context, 'query'
                     )
                     else fake_dl_list
@@ -196,7 +196,7 @@ class GraphemyRouter(GraphQLRouter):
                     == GenericAlias
                     else fake_dl_one,
                     filter_method=dl_filter,
-                    request=request,
+                    context=context,
                 )
             return context
 

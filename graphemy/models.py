@@ -1,3 +1,4 @@
+import abc
 import re
 
 from sqlmodel import SQLModel
@@ -81,5 +82,5 @@ class Graphemy(SQLModel):
         for attr in to_remove:
             del cls.__annotations__[attr]
 
-    async def permission_getter(info: Info, request_type: str) -> bool:
-        return True
+    async def permission_getter(context: dict, request_type: str) -> bool:
+        pass

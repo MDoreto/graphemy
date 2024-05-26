@@ -3,11 +3,10 @@ from datetime import date
 from graphemy import Dl, Field, Graphemy
 
 
-class Student(Graphemy, table=True):
+class Teacher(Graphemy, table=True):
     id: int | None = Field(primary_key=True, default=None)
     name: str
-    birth_date: date
-    courses: list['StudentCourse'] = Dl(source='id', target='student_id')
+    courses: list['Course'] = Dl(source='id', target='teacher_id')
 
 
 class Course(Graphemy, table=True):
@@ -18,6 +17,13 @@ class Course(Graphemy, table=True):
     teacher: 'Teacher' = Dl(source='teacher_id', target='id')
 
 
+class Student(Graphemy, table=True):
+    id: int | None = Field(primary_key=True, default=None)
+    name: str
+    birth_date: date
+    courses: list['StudentCourse'] = Dl(source='id', target='student_id')
+
+
 class StudentCourse(Graphemy, table=True):
     student_id: int = Field(primary_key=True)
     course_id: int = Field(primary_key=True)
@@ -26,12 +32,6 @@ class StudentCourse(Graphemy, table=True):
     grader: list['Grade'] = Dl(
         source=['student_id', 'course_id'], target=['student_id', 'course_id']
     )
-
-
-class Teacher(Graphemy, table=True):
-    id: int | None = Field(primary_key=True, default=None)
-    name: str
-    courses: list['Course'] = Dl(source='id', target='teacher_id')
 
 
 class Grade(Graphemy, table=True):
