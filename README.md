@@ -4,6 +4,9 @@
 [![Documentation Status](https://readthedocs.org/projects/graphemy/badge/?version=latest)](https://graphemy.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/MDoreto/graphemy/graph/badge.svg?token=GJDMVBA425)](https://codecov.io/gh/MDoreto/graphemy)
 ![CI](https://github.com/MDoreto/graphemy/actions/workflows/pipeline.yml/badge.svg)
+<a href="https://pypi.org/project/graphemy" target="_blank">
+    <img src="https://img.shields.io/pypi/v/graphemy?color=%2334D058&label=pypi%20package" alt="Package version">
+</a>
 
 A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions.
 
