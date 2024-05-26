@@ -12,4 +12,4 @@ Details:
     - Imports are done relative to the directory where the script is run, adjusting for
       package hierarchy as necessary.
 
-::: __init__
+::: graphemy

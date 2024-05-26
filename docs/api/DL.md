@@ -16,4 +16,4 @@ Functions:
 **dict_to_tuple:** Converts dictionaries, possibly containing nested dictionaries or lists,
 into a tuple format, suitable for consistent hashing and comparisons.
 
-::: DL
+::: graphemy.dl
