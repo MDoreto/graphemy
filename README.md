@@ -1,6 +1,8 @@
-<img src="https://graphemy.readthedocs.io/en/latest/assets/logo.png" width="200">
-
+![project's logo](assets/logo.png){ width="300" .center}
 # GRAPHEMY
+<p align="center">
+    <em>Integrating SQLModel and Strawberry, providing a seamless GraphQL integration with Databases easy and fast.</em>
+</p>
 [![Documentation Status](https://readthedocs.org/projects/graphemy/badge/?version=latest)](https://graphemy.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/MDoreto/graphemy/graph/badge.svg?token=GJDMVBA425)](https://codecov.io/gh/MDoreto/graphemy)
 ![CI](https://github.com/MDoreto/graphemy/actions/workflows/pipeline.yml/badge.svg)
@@ -8,7 +10,14 @@
     <img src="https://img.shields.io/pypi/v/graphemy?color=%2334D058&label=pypi%20package" alt="Package version">
 </a>
 
-A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions.
+
+---
+
+**Documentation**: <a href="https://github.com/MDoreto/graphemy" target="_blank">https://github.com/MDoreto/graphemy</a>
+
+**Source Code**: <a href="https://github.com/MDoreto/graphemy" target="_blank">https://github.com/MDoreto/graphemy</a>
+
+---
 
 
 ## Overview
