@@ -4,12 +4,31 @@ repo_name: MDoreto/graphemy
 edit_uri: tree/master/docs
 theme:
   name: material
+  palette:
+  - scheme: default
+    primary: dark blue
+    accent: amber
+    toggle:
+      icon: material/lightbulb
+      name: Switch to dark mode
+  - scheme: slate
+    primary: blue
+    accent: amber
+    toggle:
+      icon: material/lightbulb-outline
+      name: Switch to light mode
+  pallete:
+  - scheme: default
+    toggle:
+      icon: material/lightbulb
+      name: Switch to dark mode
   language: en
   logo: assets/logo.png
   favicon: assets/logo.png
   features:
   - search.suggest
   - search.highlight
+  - content.code.copy
 
 markdown_extensions:
 - attr_list
@@ -19,6 +38,13 @@ markdown_extensions:
     - name: mermaid
       class: mermaid
       format: !!python/name:pymdownx.superfences.fence_code_format ''
+- pymdownx.blocks.admonition:
+    types:
+    - note
+    - info
+    - tip
+    - warning
+    - danger
 - pymdownx.tabbed:
     alternate_style: true
     

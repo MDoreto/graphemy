@@ -1,17 +1,73 @@
 from strawberry.dataloader import DataLoader
 
-from .models import MyDate
+from .schemas.models import DateFilter
 
 
-class MyDataLoader(DataLoader):
-    def __init__(self, filter_method=None, request=None, **kwargs):
+class Dl:
+    """
+    A utility class designed to facilitate the linking of source and target fields
+    across different models. This is particularly useful for setting up data loaders
+    where fields from one model may depend on fields in another, and if foreign keys should be created based on relationships.
+
+    Attributes:
+        source (str | list[str]): The source field(s) from where data is to be fetched.
+        target (str | list[str]): The target field(s) where data is to be deposited.
+        foreign_key (bool): Indicates whether the relationship should create a foreign key
+            (default is False).
+
+    Raises:
+        ValueError: If the types of source and target do not match, or if they are lists
+            and do not have the same length.
+    """
+
+    source: str | list[str]
+    target: str | list[str]
+    foreign_key: bool | None = None
+
+    def __init__(
+        self,
+        source: str | list[str],
+        target: str | list[str],
+        foreign_key: bool = None,
+    ):
+        if type(source) != type(target):
+            raise 'source and target must have same type'
+        if type(source) == list:
+            if len(source) != len(target):
+                raise 'source and target must have same length'
+            ids = {}
+            for i, id in enumerate(target):
+                ids[id] = source[i]
+            target.sort()
+            source = [ids[id] for id in target]
+        self.source = source
+        self.target = target
+        self.foreign_key = foreign_key
+
+
+class GraphemyDataLoader(DataLoader):
+    """
+    A customized DataLoader that handles additional filtering mechanisms during data
+    retrieval processes. It is capable of using predefined filter methods to process data
+    based on request-specific parameters.
+
+    Attributes:
+        filter_method (callable): A method that applies additional filtering to the data
+            based on the request context and specified filters.
+        context: The context of the request, used to pass additional parameters to the
+            filter_method.
+
+    Methods:
+        load: Overridden to apply filters before returning the data, enhancing the
+            DataLoader's functionality to cater to complex querying needs.
+    """
+
+    def __init__(self, filter_method=None, context: dict = None, **kwargs):
         self.filter_method = filter_method
-        self.request = request
+        self.context = context
         super().__init__(**kwargs)
 
-    async def load(self, keys, filters: dict | None = False):
-        if filters == False:
-            return await super().load(keys)
+    async def load(self, keys, filters: dict | None):
         filters['keys'] = (
             tuple(keys)
             if isinstance(keys, list)
@@ -21,59 +77,35 @@ class MyDataLoader(DataLoader):
         )
         data = await super().load(dict_to_tuple(filters))
         if self.filter_method:
-            data = self.filter_method(data, self.request)
+            data = self.filter_method(data, self.context)
         return data
 
 
 def dict_to_tuple(data: dict) -> tuple:
     """
-    Recursively converts a nested dictionary to a sorted tuple of key-value pairs.
-
-    This function takes a dictionary as input and recursively traverses it, converting
-    it into a sorted tuple of key-value pairs. If nested dictionaries or lists are
-    encountered, they are also recursively converted into sorted tuples. The final
-    result is a sorted tuple of all key-value pairs in the input dictionary.
+    Converts a dictionary into a tuple, recursively processing nested dictionaries
+    and lists to ensure they are in a hashable and comparable format. This is essential
+    for caching mechanisms within DataLoaders.
 
     Args:
-        data (dict): The input dictionary to be converted.
+        data (dict): The dictionary to be converted.
 
     Returns:
-        tuple: A sorted tuple of key-value pairs from the input dictionary.
-
-    Example:
-        >>> data = {
-        ...     'name': 'John',
-        ...     'age': 30,
-        ...     'address': {
-        ...         'street': '123 Main St',
-        ...         'city': 'Exampleville'
-        ...     }
-        ... }
-        >>> dict_to_tuple(data)
-        (('address', (('city', 'Exampleville'), ('street', '123 Main St'))), ('age', 30), ('name', 'John'))
-
-    Note:
-        This function is compatible with dictionaries that contain nested dictionaries,
-        lists, and instances of 'MyDate' objects. Lists are converted to sorted tuples
-        before further processing.
-
-    See Also:
-        - MyDate: An example custom data type that can be converted into a dictionary.
-
+        tuple: A tuple representation of the original dictionary, suitable for use as
+            a key in caching operations.
     """
     result = []
     for key, value in data.items():
-        if isinstance(value, MyDate):
+        if isinstance(value, DateFilter):
             value = vars(value)
         if isinstance(value, dict):
             nested_tuples = dict_to_tuple(value)
             result.append((key, nested_tuples))
         elif isinstance(value, list):
-            # Substitutes the list with a tuple before recursively calling the function
             nested_tuples = tuple(
                 sorted(
                     dict_to_tuple(item)
-                    if isinstance(item, dict) or isinstance(item, MyDate)
+                    if isinstance(item, dict) or isinstance(item, DateFilter)
                     else item
                     for item in value
                 )
@@ -82,33 +114,3 @@ def dict_to_tuple(data: dict) -> tuple:
         else:
             result.append((key, value))
     return tuple(sorted(result))
-
-
-def dl(class_name: str | None = None, many: bool = True) -> callable:
-    """
-    Decorator for attaching metadata to a function indicating the expected behavior of a DataLoader.
-
-    Args:
-        class_name (str, optional): The data type that the DataLoader is expected to return. Defaults to None.
-        many (bool, optional): Indicates whether the DataLoader should return a single item or a list of items.
-            Defaults to True.
-
-    Returns:
-        callable: The decorated function.
-
-    Example:
-        >>> @dl(class_name="MyData", many=False)
-        ... def load_data(item_id: int) -> dict:
-        ...     # Implementation of data loading
-        ...     pass
-
-        >>> assert getattr(load_data, 'dl') == "MyData"
-        >>> assert getattr(load_data, 'many') is False
-    """
-
-    def wrapper(func):
-        setattr(func, 'dl', class_name)
-        setattr(func, 'many', many)
-        return func
-
-    return wrapper
