@@ -70,10 +70,12 @@ ex_basic = "uvicorn examples.tutorial.basic.main:app --reload --port 8001"
 ex_dl = "uvicorn examples.tutorial.relationship.main:app --reload --port 8001"
 lint = "blue . && isort ."
 docs = "mkdocs serve"
+pre_publish = "poetry export --output requirements-docs.txt --with doc --without-hashes   "
 pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
 post_test = "coverage html"
 publish = "poetry publish --build"
+
 
 [tool.coverage.report]
 exclude_also = [
