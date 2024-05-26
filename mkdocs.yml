@@ -2,14 +2,7 @@ site_name: Graphemy
 repo_url: https://github.com/MDoreto/graphemy
 repo_name: MDoreto/graphemy
 edit_uri: tree/master/docs
-theme:
-  name: material
-  language: en
-  logo: assets/logo.png
-  favicon: assets/logo.png
-  features:
-  - search.suggest
-  - search.highlight
+
 
 markdown_extensions:
 - attr_list
@@ -18,7 +11,13 @@ markdown_extensions:
     custom_fences:
     - name: mermaid
       class: mermaid
-      format: !!python/name:pymdownx.superfences.fence_code_format ''
+- pymdownx.blocks.admonition:
+    types:
+    - note
+    - info
+    - tip
+    - warning
+    - danger
 - pymdownx.tabbed:
     alternate_style: true
     
