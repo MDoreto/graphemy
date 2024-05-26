@@ -32,7 +32,7 @@ class Setup:
     classes: Dict[str, 'Graphemy'] = {}
 
     @classmethod
-    async def execute_query(cls, query, engine)->list:
+    async def execute_query(cls, query, engine) -> list:
         """
         Executes a given SQL query using the specified database engine, either asynchronously or synchronously
         based on the engine configuration.
