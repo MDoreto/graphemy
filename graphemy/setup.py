@@ -32,7 +32,7 @@ class Setup:
     classes: Dict[str, 'Graphemy'] = {}
 
     @classmethod
-    async def execute_query(cls, query, engine):
+    async def execute_query(cls, query, engine)->list:
         """
         Executes a given SQL query using the specified database engine, either asynchronously or synchronously
         based on the engine configuration.
@@ -42,7 +42,7 @@ class Setup:
             engine (str): The key of the engine in the 'engine' attribute to be used for the query.
 
         Returns:
-            The result of the query execution, typically a list of database records.
+            list: The result of the query execution, typically a list of database records.
         """
         if cls.async_engine:
             async_session = sessionmaker(
@@ -68,7 +68,7 @@ class Setup:
 
         Args:
             engine (Dict[str, Engine] | Engine): A dictionary of engines or a single engine to be used.
-            get_perm (callable): A function to determine if a request is permitted.
+            permission_getter (callable): A function to determine if a request is permitted.
             query_filter (callable): A function to filter queries based on specific conditions.
         """
 
@@ -105,7 +105,7 @@ class Setup:
 
         Args:
             module ('Graphemy'): The model class for which permissions are being checked.
-            context: The context of the GraphQL request.
+            context (dict): The context of the GraphQL request.
             request_type (str): The type of request (e.g., 'query' or 'mutation') to determine the appropriate permissions.
 
         Returns:
