@@ -13,6 +13,7 @@ engine = create_engine(
     poolclass=StaticPool,
     connect_args={'check_same_thread': False},
 )
+
 Graphemy.metadata.create_all(engine)
 
 app = FastAPI()

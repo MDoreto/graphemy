@@ -8,7 +8,7 @@ Before you begin using Graphemy, it is highly recommended that you have some pri
 
 **Strawberry**: A Python library for declaratively creating GraphQL schemas. For in-depth information on using Strawberry, access the [Strawberry documentation](https://strawberry.rocks/).
 
-Having a solid understanding of these libraries is crucial to making the most of Project Name and effortlessly creating GraphQL APIs.
+Having a solid understanding of these libraries is crucial to making the most of Graphemy and effortlessly creating GraphQL APIs.
 
 ## Create a Project
 
