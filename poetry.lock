@@ -1146,6 +1146,20 @@ files = [
 ]
 
 [[package]]
+name = "mkdocs-pymdownx-material-extras"
+version = "2.5.6"
+description = "Plugin to extend MkDocs Material theme."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "mkdocs_pymdownx_material_extras-2.5.6-py3-none-any.whl", hash = "sha256:ed5bfc23c6f42f485603e05abc22926c27c2b31ef9972a0132582b73f49557e9"},
+    {file = "mkdocs_pymdownx_material_extras-2.5.6.tar.gz", hash = "sha256:e0cf0aa4f284a78ecab9caf0bc62a12d8b836a5abbd49f9638cc03b2698a021c"},
+]
+
+[package.dependencies]
+mkdocs-material = ">=8.3.3"
+
+[[package]]
 name = "mkdocstrings"
 version = "0.23.0"
 description = "Automatic documentation from sources, for MkDocs."
@@ -2591,4 +2605,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "e410cf796ebf38a9d84f8197c984ff71280a5db102f9ecd8559d84db19f534fd"
+content-hash = "6ac070d0b53eb27c67fdb6f61c41b8769de30df701ea0710d54d839ac8553799"
