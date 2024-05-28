@@ -212,7 +212,7 @@ def get_query(cls: 'Graphemy') -> StrawberryField:
     ) -> list[cls.__strawberry_schema__]:
         if not await Setup.has_permission(cls, info.context, 'query'):
             return []
-        data = await get_all(cls, filters, Setup.query_filter(cls, info))
+        data = await get_all(cls, filters, Setup.query_filter(cls, info.context))
         return data
 
     return (
