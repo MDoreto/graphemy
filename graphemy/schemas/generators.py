@@ -68,21 +68,16 @@ def set_schema(
                 attr.target if isinstance(attr.target, list) else [attr.target]
             )
             target = [returned_class.__tablename__ + '.' + t for t in target]
-            filtered_pairs = [
-                (s, t)
-                for s, t in zip(source, target)
-                if not (
-                    isinstance(s, int)
-                    or s.startswith('_')
-                    or isinstance(t, int)
-                    or t.startswith('_')
-                )
-            ]
-            source, target = (
-                zip(*filtered_pairs) if filtered_pairs else ([], [])
-            )
 
-            if len(source) > 0 and len(target) > 0:
+            if (
+                len(source) > 0
+                and len(target) > 0
+                and not any(
+                    isinstance(item, int)
+                    or (isinstance(item, str) and item.startswith('_'))
+                    for item in source + target
+                )
+            ):
                 cls.__table__.append_constraint(
                     ForeignKeyConstraint(source, target)
                 )
@@ -212,7 +207,9 @@ def get_query(cls: 'Graphemy') -> StrawberryField:
     ) -> list[cls.__strawberry_schema__]:
         if not await Setup.has_permission(cls, info.context, 'query'):
             return []
-        data = await get_all(cls, filters, Setup.query_filter(cls, info.context))
+        data = await get_all(
+            cls, filters, Setup.query_filter(cls, info.context)
+        )
         return data
 
     return (

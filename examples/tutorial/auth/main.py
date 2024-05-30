@@ -51,9 +51,9 @@ def dl_filter(data, context):
     return data
 
 
-def query_filter(model, info):
+def query_filter(model, context):
     if model.__name__ == 'Resource':
-        return model.category.in_(info.context['user']['categories'])
+        return model.category.in_(context['user']['categories'])
     return True
 
 
