@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphemy"
-version = "1.0.0"
+version = "1.0.2"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
 readme = "README.md"
@@ -25,8 +25,8 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.12"
-sqlmodel = "0.0.18"
-strawberry-graphql = {extras = ["debug-server"], version = "^0.229.1"}
+sqlmodel = "0.0.19"
+strawberry-graphql = {extras = ["debug-server"], version = "^0.235.1"}
 fastapi = "^0.111.0"
 
 
