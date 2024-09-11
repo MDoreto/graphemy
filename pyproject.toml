@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphemy"
-version = "1.0.2"
+version = "1.0.3"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
 readme = "README.md"
@@ -25,9 +25,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.12"
-sqlmodel = "0.0.19"
-strawberry-graphql = {extras = ["debug-server"], version = "^0.235.1"}
-fastapi = "^0.111.0"
+sqlmodel = "^0.0.22"
+strawberry-graphql = {extras = ["debug-server"], version = "^0.240.0"}
+fastapi = "^0.114.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -41,6 +41,7 @@ httpx = "^0.25.0"
 pytest-env = "^1.1.1"
 aiosqlite = "^0.20.0"
 gevent = "^24.2.1"
+fastapi-cli = "^0.0.5"
 
 
 [tool.poetry.group.doc.dependencies]
@@ -66,8 +67,8 @@ profile = "black"
 line_length = 79
 
 [tool.taskipy.tasks]
-ex_basic = "uvicorn examples.tutorial.basic.main:app --reload --port 8001"
-ex_dl = "uvicorn examples.tutorial.relationship.main:app --reload --port 8001"
+ex_basic = "fastapi dev examples/tutorial/basic/main:app"
+ex_dl = "fastapi dev examples/tutorial/relationship/main.py"
 lint = "blue . && isort ."
 docs = "mkdocs serve"
 pre_publish = "poetry export --output requirements-docs.txt --with doc --without-hashes   "

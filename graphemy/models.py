@@ -1,9 +1,7 @@
-import abc
 import re
 
 from sqlmodel import SQLModel
-from strawberry.type import StrawberryType
-from strawberry.types import Info
+from strawberry.types.base import StrawberryType
 
 from .dl import Dl
 from .schemas.generators import get_dl_function

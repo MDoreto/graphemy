@@ -15,9 +15,9 @@ from typing import (
 import strawberry
 from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy.inspection import inspect
-from strawberry.field import StrawberryField
 from strawberry.tools import merge_types
 from strawberry.types import Info
+from strawberry.types.field import StrawberryField
 
 from ..database.operations import delete_item, get_all, get_items, put_item
 from ..dl import Dl
