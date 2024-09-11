@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphemy"
-version = "1.0.3"
+version = "1.0.4"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
 readme = "README.md"
@@ -35,13 +35,13 @@ black = "^24.8.0"
 pytest-cov = "^4.1.0"
 isort = "^5.12.0"
 taskipy = "^1.12.0"
-pytest-asyncio = "^0.21.1"
-httpx = "^0.25.0"
+httpx = "^0.27.2"
 pytest-env = "^1.1.1"
 aiosqlite = "^0.20.0"
 gevent = "^24.2.1"
 fastapi-cli = "^0.0.5"
 pytest = "^8.3.3"
+pytest-asyncio = "0.21.2"
 
 
 [tool.poetry.group.doc.dependencies]
