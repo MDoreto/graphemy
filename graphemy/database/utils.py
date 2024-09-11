@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from ..models import Graphemy
 
 
-def get_keys(model: 'Graphemy', id: str | list[str]) -> tuple | str:
+def get_keys(model: "Graphemy", id: str | list[str]) -> tuple | str:
     if isinstance(id, list):
         return tuple([getattr(model, id[i]) for i in range(len(id))])
     value = getattr(model, id)
@@ -18,7 +18,7 @@ def get_keys(model: 'Graphemy', id: str | list[str]) -> tuple | str:
 
 
 def get_filter(
-    model: 'Graphemy',
+    model: "Graphemy",
     keys: tuple,
     id: str | list[str],
     params: dict,
@@ -33,25 +33,25 @@ def get_filter(
                     f.append(
                         id[k]
                         if type(id[k]) == int
-                        else id[k][1:]
-                        if id[k].startswith('_')
-                        else getattr(model, id[k])
-                        == bindparam(
-                            f'p{i}_{j}_{k}',
-                            literal_execute=not isinstance(key[k], date),
+                        else (
+                            id[k][1:]
+                            if id[k].startswith("_")
+                            else getattr(model, id[k])
+                            == bindparam(
+                                f"p{i}_{j}_{k}",
+                                literal_execute=not isinstance(key[k], date),
+                            )
                         )
                     )
-                    params[f'p{i}_{j}_{k}'] = key[k]
+                    params[f"p{i}_{j}_{k}"] = key[k]
                 filter.append(and_(*f))
             else:
                 filter.append(False)
         return or_(*filter)
     elif None in keys:
         keys.remove(None)
-    params[f'p{i}'] = keys
-    a = getattr(model, id).in_(
-        bindparam(f'p{i}', expanding=True, literal_execute=True)
-    )
+    params[f"p{i}"] = keys
+    a = getattr(model, id).in_(bindparam(f"p{i}", expanding=True, literal_execute=True))
     return getattr(model, id).in_(
-        bindparam(f'p{i}', expanding=True, literal_execute=True)
+        bindparam(f"p{i}", expanding=True, literal_execute=True)
     )

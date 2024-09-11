@@ -78,7 +78,7 @@ async def hello_world(self, info) -> str:
     Returns:
         A string greeting 'Hello World'.
     """
-    return 'Hello World'
+    return "Hello World"
 
 
 class GraphemyRouter(GraphQLRouter):
@@ -143,12 +143,12 @@ class GraphemyRouter(GraphQLRouter):
             cls_query, cls_filter = get_query(cls)
             setattr(
                 sys.modules[__name__],
-                cls.__name__ + 'Schema',
+                cls.__name__ + "Schema",
                 cls.__strawberry_schema__,
             )
             setattr(
                 sys.modules[__name__],
-                cls.__name__ + 'Filter',
+                cls.__name__ + "Filter",
                 cls_filter,
             )
             if cls.__enable_query__:
@@ -162,39 +162,37 @@ class GraphemyRouter(GraphQLRouter):
                 need_mutation = False
                 setattr(
                     mutation,
-                    'put_' + cls.__tablename__.lower(),
+                    "put_" + cls.__tablename__.lower(),
                     get_put_mutation(cls),
                 )
             if cls.__enable_delete_mutation__:
                 need_mutation = False
                 setattr(
                     mutation,
-                    'delete_' + cls.__tablename__.lower(),
+                    "delete_" + cls.__tablename__.lower(),
                     get_delete_mutation(cls),
                 )
         if need_query:
             setattr(
                 query,
-                'hello_world',
+                "hello_world",
                 strawberry.field(hello_world),
             )
 
         async def get_context(request: Request, response: Response) -> dict:
-            context = (
-                await context_getter(request, response)
-                if context_getter
-                else {}
-            )
+            context = await context_getter(request, response) if context_getter else {}
             for k, (func, return_class) in functions.items():
                 context[k] = GraphemyDataLoader(
-                    load_fn=func
-                    if await Setup.permission_getter(
-                        return_class, context, 'query'
-                    )
-                    else fake_dl_list
-                    if type(inspect.signature(func).return_annotation)
-                    == GenericAlias
-                    else fake_dl_one,
+                    load_fn=(
+                        func
+                        if await Setup.permission_getter(return_class, context, "query")
+                        else (
+                            fake_dl_list
+                            if type(inspect.signature(func).return_annotation)
+                            == GenericAlias
+                            else fake_dl_one
+                        )
+                    ),
                     filter_method=dl_filter,
                     context=context,
                 )
@@ -202,9 +200,11 @@ class GraphemyRouter(GraphQLRouter):
 
         schema = strawberry.Schema(
             query=strawberry.type(query),
-            mutation=None
-            if need_mutation and hasattr(mutation, '__auto_generated__')
-            else strawberry.type(mutation),
+            mutation=(
+                None
+                if need_mutation and hasattr(mutation, "__auto_generated__")
+                else strawberry.type(mutation)
+            ),
             extensions=extensions,
         )
         super().__init__(schema=schema, context_getter=get_context, **kwargs)
@@ -220,21 +220,19 @@ class GraphemyRouter(GraphQLRouter):
         Returns:
             GraphQLHTTPResponse: The formatted response to be returned to the client.
         """
-        data: GraphQLHTTPResponse = {'data': result.data}
+        data: GraphQLHTTPResponse = {"data": result.data}
         errors = []
-        if 'errors' in request.scope:
+        if "errors" in request.scope:
             errors.append(
                 format_graphql_error(
                     GraphQLError(
                         "User don't have necessary permissions for this path",
-                        path=[
-                            c.__tablename__ for c in request.scope['errors']
-                        ],
+                        path=[c.__tablename__ for c in request.scope["errors"]],
                     )
                 )
             )
         if result.errors:
             errors.extend([format_graphql_error(err) for err in result.errors])
         if len(errors) > 0:
-            data['errors'] = errors
+            data["errors"] = errors
         return data

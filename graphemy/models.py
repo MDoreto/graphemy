@@ -53,18 +53,16 @@ class Graphemy(SQLModel):
     __enable_put_mutation__: bool | None = None
     __enable_delete_mutation__: bool | None = None
     __enable_query__: bool | None = None
-    __queryname__: str = ''
-    __enginename__: str = 'default'
+    __queryname__: str = ""
+    __enginename__: str = "default"
 
     class Strawberry:
         pass
 
     def __init_subclass__(cls):
-        cls.__tablename__ = re.sub(
-            r'(?<!^)(?=[A-Z])', '_', cls.__name__
-        ).lower()
+        cls.__tablename__ = re.sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
         cls.__queryname__ = (
-            cls.__queryname__ if cls.__queryname__ else cls.__tablename__ + 's'
+            cls.__queryname__ if cls.__queryname__ else cls.__tablename__ + "s"
         )
         Setup.classes[cls.__name__] = cls
         to_remove = []
@@ -73,9 +71,7 @@ class Graphemy(SQLModel):
                 attr_value = getattr(cls, attr_name)
                 if isinstance(attr_value, Dl):
                     to_remove.append(attr_name)
-                    dl_field = get_dl_function(
-                        attr_name, attr_type, attr_value
-                    )
+                    dl_field = get_dl_function(attr_name, attr_type, attr_value)
                     setattr(cls, attr_name, dl_field)
         for attr in to_remove:
             del cls.__annotations__[attr]

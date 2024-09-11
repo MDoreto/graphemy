@@ -1,8 +1,8 @@
 def test_insert(client):
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """mutation MyMutation {
+            "query": """mutation MyMutation {
                 putStudent(params: {birthDate: "1999-09-16", name: "Some Name"}) {
                     id
                 }
@@ -10,14 +10,14 @@ def test_insert(client):
         },
     )
     assert response.status_code == 200
-    assert response.json() == {'data': {'putStudent': {'id': 1}}}
+    assert response.json() == {"data": {"putStudent": {"id": 1}}}
 
 
 def test_insert_key(client):
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """mutation MyMutation {
+            "query": """mutation MyMutation {
 putStudentCourse(params: {courseId: 1, studentId: 1}) {
     studentId
     courseId
@@ -27,15 +27,15 @@ putStudentCourse(params: {courseId: 1, studentId: 1}) {
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {'putStudentCourse': {'studentId': 1, 'courseId': 1}}
+        "data": {"putStudentCourse": {"studentId": 1, "courseId": 1}}
     }
 
 
 def test_read(client):
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 students {
                     id
                     name
@@ -46,19 +46,17 @@ def test_read(client):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'students': [
-                {'birthDate': '1999-09-16', 'id': 1, 'name': 'Some Name'}
-            ]
+        "data": {
+            "students": [{"birthDate": "1999-09-16", "id": 1, "name": "Some Name"}]
         }
     }
 
 
 def test_update(client):
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """mutation MyMutation {
+            "query": """mutation MyMutation {
                 putStudent(params: {birthDate: "1999-09-16", name: "Some Name Last", id: 1}) {
                     id
                     name
@@ -68,12 +66,12 @@ def test_update(client):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {'putStudent': {'id': 1, 'name': 'Some Name Last'}}
+        "data": {"putStudent": {"id": 1, "name": "Some Name Last"}}
     }
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 students {
                     id
                     name
@@ -84,19 +82,17 @@ def test_update(client):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'students': [
-                {'birthDate': '1999-09-16', 'id': 1, 'name': 'Some Name Last'}
-            ]
+        "data": {
+            "students": [{"birthDate": "1999-09-16", "id": 1, "name": "Some Name Last"}]
         }
     }
 
 
 def test_delete(client):
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """mutation MyMutation {
+            "query": """mutation MyMutation {
                 deleteStudent(params: {id: 1}) {
                     id
                 }
@@ -104,11 +100,11 @@ def test_delete(client):
         },
     )
     assert response.status_code == 200
-    assert response.json() == {'data': {'deleteStudent': {'id': 1}}}
+    assert response.json() == {"data": {"deleteStudent": {"id": 1}}}
     response = client.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 students {
                     id
                     name
@@ -118,4 +114,4 @@ def test_delete(client):
         },
     )
     assert response.status_code == 200
-    assert response.json() == {'data': {'students': []}}
+    assert response.json() == {"data": {"students": []}}

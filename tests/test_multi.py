@@ -1,8 +1,8 @@
 def test_multi_query(client_data):
     response = client_data.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
   teachers {
     id
     name
@@ -24,19 +24,19 @@ def test_multi_query(client_data):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'teachers': [
+        "data": {
+            "teachers": [
                 {
-                    'id': 1,
-                    'name': 'Some Teacher',
-                    'courses': [{'id': 2, 'name': 'Physics'}],
+                    "id": 1,
+                    "name": "Some Teacher",
+                    "courses": [{"id": 2, "name": "Physics"}],
                 }
             ],
-            'teacher2': [
+            "teacher2": [
                 {
-                    'id': 1,
-                    'name': 'Some Teacher',
-                    'courses': [{'id': 1, 'name': 'Mathematics'}],
+                    "id": 1,
+                    "name": "Some Teacher",
+                    "courses": [{"id": 1, "name": "Mathematics"}],
                 }
             ],
         }
@@ -45,9 +45,9 @@ def test_multi_query(client_data):
 
 def test_multi_query_one(client_data):
     response = client_data.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
   courses {
     teacher(filters: {id: 1}) {
       name
@@ -65,14 +65,14 @@ def test_multi_query_one(client_data):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'courses': [
-                {'teacher': {'name': 'Some Teacher'}, 'name': 'Mathematics'},
-                {'teacher': {'name': 'Some Teacher'}, 'name': 'Physics'},
+        "data": {
+            "courses": [
+                {"teacher": {"name": "Some Teacher"}, "name": "Mathematics"},
+                {"teacher": {"name": "Some Teacher"}, "name": "Physics"},
             ],
-            'courses2': [
-                {'teacher': None, 'name': 'Mathematics'},
-                {'teacher': None, 'name': 'Physics'},
+            "courses2": [
+                {"teacher": None, "name": "Mathematics"},
+                {"teacher": None, "name": "Physics"},
             ],
         }
     }
@@ -80,9 +80,9 @@ def test_multi_query_one(client_data):
 
 def test_multi_key(client_data):
     response = client_data.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
   students {
     name
     birthDate
@@ -101,39 +101,37 @@ def test_multi_key(client_data):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'students': [
+        "data": {
+            "students": [
                 {
-                    'name': 'Some Name',
-                    'birthDate': '1999-09-16',
-                    'courses': [
+                    "name": "Some Name",
+                    "birthDate": "1999-09-16",
+                    "courses": [
                         {
-                            'course': {'name': 'Mathematics'},
-                            'grader': [{'semester': 1, 'grade': 10.0}],
+                            "course": {"name": "Mathematics"},
+                            "grader": [{"semester": 1, "grade": 10.0}],
                         },
                         {
-                            'course': {'name': 'Physics'},
-                            'grader': [{'semester': 1, 'grade': 9.0}],
+                            "course": {"name": "Physics"},
+                            "grader": [{"semester": 1, "grade": 9.0}],
                         },
                     ],
                 },
                 {
-                    'name': 'Other Name',
-                    'birthDate': '1999-07-24',
-                    'courses': [
+                    "name": "Other Name",
+                    "birthDate": "1999-07-24",
+                    "courses": [
                         {
-                            'course': {'name': 'Mathematics'},
-                            'grader': [{'semester': 1, 'grade': 8.0}],
+                            "course": {"name": "Mathematics"},
+                            "grader": [{"semester": 1, "grade": 8.0}],
                         },
-                        {'course': {'name': 'Physics'}, 'grader': []},
+                        {"course": {"name": "Physics"}, "grader": []},
                     ],
                 },
                 {
-                    'name': 'Another Name',
-                    'birthDate': '1998-05-12',
-                    'courses': [
-                        {'course': {'name': 'Mathematics'}, 'grader': []}
-                    ],
+                    "name": "Another Name",
+                    "birthDate": "1998-05-12",
+                    "courses": [{"course": {"name": "Mathematics"}, "grader": []}],
                 },
             ]
         }

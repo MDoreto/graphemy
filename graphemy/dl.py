@@ -31,10 +31,10 @@ class Dl:
         foreign_key: bool = None,
     ):
         if type(source) != type(target):
-            raise 'source and target must have same type'
+            raise "source and target must have same type"
         if type(source) == list:
             if len(source) != len(target):
-                raise 'source and target must have same length'
+                raise "source and target must have same length"
             ids = {}
             for i, id in enumerate(target):
                 ids[id] = source[i]
@@ -68,12 +68,10 @@ class GraphemyDataLoader(DataLoader):
         super().__init__(**kwargs)
 
     async def load(self, keys, filters: dict | None):
-        filters['keys'] = (
+        filters["keys"] = (
             tuple(keys)
             if isinstance(keys, list)
-            else keys.strip()
-            if isinstance(keys, str)
-            else keys
+            else keys.strip() if isinstance(keys, str) else keys
         )
         data = await super().load(dict_to_tuple(filters))
         if self.filter_method:
@@ -104,9 +102,11 @@ def dict_to_tuple(data: dict) -> tuple:
         elif isinstance(value, list):
             nested_tuples = tuple(
                 sorted(
-                    dict_to_tuple(item)
-                    if isinstance(item, dict) or isinstance(item, DateFilter)
-                    else item
+                    (
+                        dict_to_tuple(item)
+                        if isinstance(item, dict) or isinstance(item, DateFilter)
+                        else item
+                    )
                     for item in value
                 )
             )

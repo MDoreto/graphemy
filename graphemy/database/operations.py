@@ -13,9 +13,9 @@ if TYPE_CHECKING:
 
 
 async def get_items(
-    model: 'Graphemy',
+    model: "Graphemy",
     parameters: list[tuple],
-    id: str | list[str] = 'id',
+    id: str | list[str] = "id",
     many: bool = True,
 ):
     groups = {}
@@ -41,12 +41,10 @@ async def get_items(
                     if isinstance(v[0], tuple):
                         if v[2][1]:
                             filter_temp.append(
-                                extract('year', getattr(model, k)) == v[2][1]
+                                extract("year", getattr(model, k)) == v[2][1]
                             )
                         if v[0][1]:
-                            filter_temp.append(
-                                getattr(model, k).in_(list(v[0][1]))
-                            )
+                            filter_temp.append(getattr(model, k).in_(list(v[0][1])))
                         if v[1][1] and v[1][1][0]:
                             filter_temp.append(getattr(model, k) >= v[1][1][0])
                         if v[1][1] and v[1][1][1]:
@@ -73,9 +71,7 @@ async def get_items(
                 groups[key] = r
         else:
             for t in temp:
-                if not t[0][1] or all(
-                    [getattr(r, k) in v for k, v in t[0][1] if v]
-                ):
+                if not t[0][1] or all([getattr(r, k) in v for k, v in t[0][1] if v]):
                     if many:
                         groups[t].append(r)
                     else:
@@ -83,16 +79,14 @@ async def get_items(
     return groups.values()
 
 
-async def get_all(model: 'Graphemy', filters, query_filter) -> list:
+async def get_all(model: "Graphemy", filters, query_filter) -> list:
     query = select(model).where(query_filter)
     if filters:
         filters = vars(filters)
         for k, v in filters.items():
             if isinstance(v, DateFilter):
                 if v.year:
-                    query = query.where(
-                        extract('year', getattr(model, k)) == v.year
-                    )
+                    query = query.where(extract("year", getattr(model, k)) == v.year)
                 if v.items:
                     query = query.where(getattr(model, k).in_(v.items))
                 if v.range and v.range[0]:
@@ -105,7 +99,7 @@ async def get_all(model: 'Graphemy', filters, query_filter) -> list:
     return r
 
 
-async def put_item(model: 'Graphemy', item, id='id'):
+async def put_item(model: "Graphemy", item, id="id"):
     id = [getattr(item, i) for i in id]
     kwargs = vars(item)
     engine = Setup.engine[model.__enginename__]
@@ -141,7 +135,7 @@ async def put_item(model: 'Graphemy', item, id='id'):
     return new_item
 
 
-async def delete_item(model: 'Graphemy', item, id='id'):
+async def delete_item(model: "Graphemy", item, id="id"):
     id = [getattr(item, i) for i in id]
     engine = Setup.engine[model.__enginename__]
     if Setup.async_engine:

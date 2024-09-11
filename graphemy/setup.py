@@ -29,7 +29,7 @@ class Setup:
     engine: Dict[str, Engine] = None
     permission_getter: Callable
     async_engine = False
-    classes: Dict[str, 'Graphemy'] = {}
+    classes: Dict[str, "Graphemy"] = {}
 
     @classmethod
     async def execute_query(cls, query, engine) -> list:
@@ -75,8 +75,8 @@ class Setup:
         if isinstance(engine, Dict):
             cls.engine = engine
         else:
-            cls.engine = {'default': engine}
-        if engine and 'async' in cls.engine['default'].__module__:
+            cls.engine = {"default": engine}
+        if engine and "async" in cls.engine["default"].__module__:
             cls.async_engine = True
         if query_filter:
             cls.query_filter = query_filter
@@ -97,7 +97,7 @@ class Setup:
 
     @classmethod
     async def has_permission(
-        cls, module: 'Graphemy', context: dict, request_type: str
+        cls, module: "Graphemy", context: dict, request_type: str
     ) -> bool:
         """
         Determines if a user has permission to execute a GraphQL query or mutation based on the
@@ -115,13 +115,11 @@ class Setup:
         if isinstance(permission, bool):
             return permission
         else:
-            permission = await cls.permission_getter(
-                module, context, request_type
-            )
+            permission = await cls.permission_getter(module, context, request_type)
         return permission
 
     @classmethod
-    def get_auth(cls, module: 'Graphemy', request_type: str) -> BasePermission:
+    def get_auth(cls, module: "Graphemy", request_type: str) -> BasePermission:
         """
         Creates a custom Strawberry GraphQL permission class that performs authentication and authorization checks.
 
@@ -137,14 +135,12 @@ class Setup:
             async def has_permission(
                 self, source, info: strawberry.Info, **kwargs
             ) -> bool:
-                if not await cls.has_permission(
-                    module, info.context, request_type
-                ):
-                    info.context['response'].status_code = 403
-                    if not 'errors' in info.context['request'].scope:
-                        info.context['request'].scope['errors'] = [module]
-                    elif not module in info.context['request'].scope['errors']:
-                        info.context['request'].scope['errors'].append(module)
+                if not await cls.has_permission(module, info.context, request_type):
+                    info.context["response"].status_code = 403
+                    if not "errors" in info.context["request"].scope:
+                        info.context["request"].scope["errors"] = [module]
+                    elif not module in info.context["request"].scope["errors"]:
+                        info.context["request"].scope["errors"].append(module)
                 return True
 
         return IsAuthenticated

@@ -4,7 +4,7 @@ import pytest_asyncio
 from graphemy import Setup
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def clear_classes():
     from sqlmodel.main import default_registry
 
@@ -21,7 +21,7 @@ def clear_classes():
     default_registry.dispose()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def client(clear_classes):
     from fastapi.testclient import TestClient
 
@@ -31,7 +31,7 @@ def client(clear_classes):
     yield TestClient(app)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def client_data(clear_classes):
     import importlib
 
@@ -51,7 +51,7 @@ def client_data(clear_classes):
     return TestClient(main.app)
 
 
-@pytest_asyncio.fixture(scope='module')
+@pytest_asyncio.fixture(scope="module")
 async def client_async(clear_classes):
     from fastapi import FastAPI
     from httpx import AsyncClient
@@ -62,8 +62,8 @@ async def client_async(clear_classes):
     app = FastAPI()
 
     engine = create_async_engine(
-        'sqlite+aiosqlite:///',
-        connect_args={'check_same_thread': False},
+        "sqlite+aiosqlite:///",
+        connect_args={"check_same_thread": False},
     )
 
     class User(Graphemy, table=True):
@@ -77,12 +77,12 @@ async def client_async(clear_classes):
         await conn.run_sync(Graphemy.metadata.create_all)
 
     router = GraphemyRouter(engine=engine)
-    app.include_router(router, prefix='/graphql')
-    async with AsyncClient(app=app, base_url='http://test') as ac:
+    app.include_router(router, prefix="/graphql")
+    async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def client_auth(clear_classes):
     import importlib
 

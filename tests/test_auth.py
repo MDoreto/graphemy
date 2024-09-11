@@ -1,8 +1,8 @@
 def test_class_permission(client_auth):
     response = client_auth.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 privates {
                     id
                     description
@@ -12,11 +12,11 @@ def test_class_permission(client_auth):
     )
     assert response.status_code == 403
     assert response.json() == {
-        'data': {'privates': []},
-        'errors': [
+        "data": {"privates": []},
+        "errors": [
             {
-                'message': "User don't have necessary permissions for this path",
-                'path': ['private'],
+                "message": "User don't have necessary permissions for this path",
+                "path": ["private"],
             }
         ],
     }
@@ -24,9 +24,9 @@ def test_class_permission(client_auth):
 
 def test_permission_dl(client_auth):
     response = client_auth.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 owners {
                     id
                     name
@@ -44,15 +44,13 @@ def test_permission_dl(client_auth):
     )
     assert response.status_code == 403
     assert response.json() == {
-        'data': {
-            'owners': [
-                {'id': '1', 'name': 'Center 1', 'privates': [], 'keys': []}
-            ]
+        "data": {
+            "owners": [{"id": "1", "name": "Center 1", "privates": [], "keys": []}]
         },
-        'errors': [
+        "errors": [
             {
-                'message': "User don't have necessary permissions for this path",
-                'path': ['private', 'key'],
+                "message": "User don't have necessary permissions for this path",
+                "path": ["private", "key"],
             }
         ],
     }
@@ -60,9 +58,9 @@ def test_permission_dl(client_auth):
 
 def test_permission_dl_one(client_auth):
     response = client_auth.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 resources {
                     id
                     name
@@ -76,16 +74,16 @@ def test_permission_dl_one(client_auth):
     )
     assert response.status_code == 403
     assert response.json() == {
-        'data': {
-            'resources': [
-                {'id': 1, 'name': 'Base 1', 'private': None},
-                {'id': 2, 'name': 'Base 2', 'private': None},
+        "data": {
+            "resources": [
+                {"id": 1, "name": "Base 1", "private": None},
+                {"id": 2, "name": "Base 2", "private": None},
             ]
         },
-        'errors': [
+        "errors": [
             {
-                'message': "User don't have necessary permissions for this path",
-                'path': ['private'],
+                "message": "User don't have necessary permissions for this path",
+                "path": ["private"],
             }
         ],
     }
@@ -93,9 +91,9 @@ def test_permission_dl_one(client_auth):
 
 def test_query_permission(client_auth):
     response = client_auth.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 resources {
                     id
                     name
@@ -106,10 +104,10 @@ def test_query_permission(client_auth):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'resources': [
-                {'category': 'A', 'id': 1, 'name': 'Base 1'},
-                {'category': 'B', 'id': 2, 'name': 'Base 2'},
+        "data": {
+            "resources": [
+                {"category": "A", "id": 1, "name": "Base 1"},
+                {"category": "B", "id": 2, "name": "Base 2"},
             ]
         }
     }
@@ -117,9 +115,9 @@ def test_query_permission(client_auth):
 
 def test_dl_filter(client_auth):
     response = client_auth.post(
-        '/graphql',
+        "/graphql",
         json={
-            'query': """query MyQuery {
+            "query": """query MyQuery {
                 owners {
                     id
                     name
@@ -133,14 +131,14 @@ def test_dl_filter(client_auth):
     )
     assert response.status_code == 200
     assert response.json() == {
-        'data': {
-            'owners': [
+        "data": {
+            "owners": [
                 {
-                    'id': '1',
-                    'name': 'Center 1',
-                    'resources': [
-                        {'id': 1, 'category': 'A'},
-                        {'id': 2, 'category': 'B'},
+                    "id": "1",
+                    "name": "Center 1",
+                    "resources": [
+                        {"id": 1, "category": "A"},
+                        {"id": 2, "category": "B"},
                     ],
                 }
             ]

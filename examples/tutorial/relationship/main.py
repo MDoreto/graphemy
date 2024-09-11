@@ -14,19 +14,19 @@ from examples.tutorial.relationship.models import (
 from graphemy import Graphemy, GraphemyRouter
 
 engine = create_engine(
-    'sqlite://',
+    "sqlite://",
     poolclass=StaticPool,
-    connect_args={'check_same_thread': False},
+    connect_args={"check_same_thread": False},
 )
 Graphemy.metadata.create_all(engine)
 
 with Session(engine) as session:
-    session.add(Teacher(name='Some Teacher'))
-    session.add(Course(name='Mathematics', teacher_id=1))
-    session.add(Course(name='Physics', teacher_id=1))
-    session.add(Student(name='Some Name', birth_date=date(1999, 9, 16)))
-    session.add(Student(name='Other Name', birth_date=date(1999, 7, 24)))
-    session.add(Student(name='Another Name', birth_date=date(1998, 5, 12)))
+    session.add(Teacher(name="Some Teacher"))
+    session.add(Course(name="Mathematics", teacher_id=1))
+    session.add(Course(name="Physics", teacher_id=1))
+    session.add(Student(name="Some Name", birth_date=date(1999, 9, 16)))
+    session.add(Student(name="Other Name", birth_date=date(1999, 7, 24)))
+    session.add(Student(name="Another Name", birth_date=date(1998, 5, 12)))
     session.add(StudentCourse(student_id=1, course_id=1))
     session.add(StudentCourse(student_id=1, course_id=2))
     session.add(StudentCourse(student_id=2, course_id=1))
@@ -41,4 +41,4 @@ app = FastAPI()
 router = GraphemyRouter(
     engine=engine, enable_put_mutations=True, enable_delete_mutations=True
 )
-app.include_router(router, prefix='/graphql')
+app.include_router(router, prefix="/graphql")
