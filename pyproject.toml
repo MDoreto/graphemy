@@ -26,9 +26,8 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.12"
 sqlmodel = "^0.0.22"
-strawberry-graphql = {extras = ["debug-server"], version = "^0.240.0"}
-fastapi = "^0.114.0"
-black = "^24.8.0"
+fastapi = "^0.115.5"
+strawberry-graphql = "^0.253.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -42,6 +41,8 @@ gevent = "^24.2.1"
 fastapi-cli = "^0.0.5"
 pytest = "^8.3.3"
 pytest-asyncio = "0.21.2"
+black = "^24.10.0"
+strawberry-graphql = {extras = ["debug-server"], version = "^0.253.0"}
 
 
 [tool.poetry.group.doc.dependencies]
