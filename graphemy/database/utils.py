@@ -3,9 +3,10 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlmodel import and_, bindparam, or_
-
+import re
 if TYPE_CHECKING:
     from ..models import Graphemy
+    from ..schemas.models import SortModel
 
 
 def get_keys(model: "Graphemy", id: str | list[str]) -> tuple | str:
@@ -55,3 +56,23 @@ def get_filter(
     return getattr(model, id).in_(
         bindparam(f"p{i}", expanding=True, literal_execute=True)
     )
+
+
+def multiple_sort(model:"Graphemy", students: list["Graphemy"], sort: list["SortModel"]) -> list["Graphemy"]:
+    criteria = []   
+    for s in sort:
+        if hasattr(model, s.field):
+            attr = re.sub(r'(?<!^)(?=[A-Z])', '_', s.field).lower()
+            attr_type = model.__annotations__[attr].__name__
+            criteria.append((attr, attr_type, s.order))
+    def sort_key(student):
+        key = []
+        for (field, field_type, order) in criteria:
+            value = getattr(student, field)
+            if field_type in ['date', 'datetime']:
+                value = value.toordinal()
+            if order == "desc":
+                value = -value if field_type in ['int', 'float','date', 'datetime'] else ''.join(chr(255 - ord(c)) for c in value)
+            key.append(value)
+        return tuple(key)
+    return sorted(students, key=sort_key)
