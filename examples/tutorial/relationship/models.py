@@ -2,6 +2,8 @@ from datetime import date
 
 from graphemy import Dl, Field, Graphemy
 
+from typing import Optional
+
 
 class Teacher(Graphemy, table=True):
     id: int | None = Field(primary_key=True, default=None)
@@ -19,7 +21,7 @@ class Course(Graphemy, table=True):
 
 class Student(Graphemy, table=True):
     id: int | None = Field(primary_key=True, default=None)
-    name: str
+    name: Optional[str]
     birth_date: date
     courses: list["StudentCourse"] = Dl(source="id", target="student_id")
 

@@ -22,7 +22,7 @@ from strawberry.types.field import StrawberryField
 from ..database.operations import delete_item, get_all, get_items, put_item
 from ..dl import Dl
 from ..setup import Setup
-from .models import DateFilter,SortModel
+from .models import DateFilter, SortModel
 
 if TYPE_CHECKING:
     from ..models import Graphemy
@@ -190,7 +190,10 @@ def get_query(cls: "Graphemy") -> StrawberryField:
     filter = strawberry.input(name=f"{cls.__name__}Filter")(Filter)
 
     async def query(
-        self, info: Info, filters: filter | None = None, sort: list[SortModel] | None = None
+        self,
+        info: Info,
+        filters: filter | None = None,
+        sort: list[SortModel] | None = None,
     ) -> list[cls.__strawberry_schema__]:
         if not await Setup.has_permission(cls, info.context, "query"):
             return []

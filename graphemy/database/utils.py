@@ -1,9 +1,10 @@
+import re
 from datetime import date
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_type_hints, get_origin, Optional, Union, get_args
 
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlmodel import and_, bindparam, or_
-import re
+
 if TYPE_CHECKING:
     from ..models import Graphemy
     from ..schemas.models import SortModel
@@ -58,21 +59,40 @@ def get_filter(
     )
 
 
-def multiple_sort(model:"Graphemy", students: list["Graphemy"], sort: list["SortModel"]) -> list["Graphemy"]:
-    criteria = []   
+def multiple_sort(
+    model: "Graphemy", students: list["Graphemy"], sort: list["SortModel"]
+) -> list["Graphemy"]:
+    criteria = []
+    print(model.__annotations__)
+    type_hints = get_type_hints(model)
+    
+    # Get the field type
     for s in sort:
         if hasattr(model, s.field):
-            attr = re.sub(r'(?<!^)(?=[A-Z])', '_', s.field).lower()
-            attr_type = model.__annotations__[attr].__name__
-            criteria.append((attr, attr_type, s.order))
+            attr = re.sub(r"(?<!^)(?=[A-Z])", "_", s.field).lower()
+            field_type = type_hints.get(s.field)
+    
+    # Handle Optional, str | None
+            if get_origin(field_type) in {Optional, Union}:
+                # Extract the base type, excluding NoneType
+                field_type = next(
+                    arg.__name__ for arg in get_args(field_type) if arg is not type(None)
+                )
+            criteria.append((attr, field_type, s.order))
+    print(criteria)
     def sort_key(student):
         key = []
-        for (field, field_type, order) in criteria:
+        for field, field_type, order in criteria:
             value = getattr(student, field)
-            if field_type in ['date', 'datetime']:
+            if field_type in ["date", "datetime"]:
                 value = value.toordinal()
             if order == "desc":
-                value = -value if field_type in ['int', 'float','date', 'datetime'] else ''.join(chr(255 - ord(c)) for c in value)
+                value = (
+                    -value
+                    if field_type in ["int", "float", "date", "datetime"]
+                    else "".join(chr(255 - ord(c)) for c in value)
+                )
             key.append(value)
         return tuple(key)
+
     return sorted(students, key=sort_key)

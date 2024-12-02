@@ -9,6 +9,7 @@ class DateFilter:
     items: list[date] | None = None
     year: int | None = None
 
+
 @strawberry.input
 class SortModel:
     field: str

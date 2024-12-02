@@ -6,11 +6,12 @@ from sqlmodel import Session, and_, extract, or_, select
 
 from ..schemas.models import DateFilter
 from ..setup import Setup
-from .utils import get_filter, get_keys,multiple_sort
+from .utils import get_filter, get_keys, multiple_sort
 
 if TYPE_CHECKING:
     from ..models import Graphemy
     from ..schemas.models import SortModel
+
 
 async def get_items(
     model: "Graphemy",
@@ -79,7 +80,9 @@ async def get_items(
     return groups.values()
 
 
-async def get_all(model: "Graphemy", filters, query_filter, sort:list["SortModel"] | None = None) -> list:
+async def get_all(
+    model: "Graphemy", filters, query_filter, sort: list["SortModel"] | None = None
+) -> list:
     query = select(model).where(query_filter)
     if filters:
         filters = vars(filters)
