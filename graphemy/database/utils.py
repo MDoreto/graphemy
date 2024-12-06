@@ -1,7 +1,7 @@
 import re
 from datetime import date
-from typing import TYPE_CHECKING,get_args,get_origin
 from types import UnionType
+from typing import TYPE_CHECKING, get_args, get_origin
 
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlmodel import and_, bindparam, or_
@@ -60,20 +60,23 @@ def get_filter(
     )
 
 
-def multiple_sort(model:"Graphemy", items: list["Graphemy"], sort: list["SortModel"]) -> list["Graphemy"]:
-    criteria = []   
+def multiple_sort(
+    model: "Graphemy", items: list["Graphemy"], sort: list["SortModel"]
+) -> list["Graphemy"]:
+    criteria = []
     for s in sort:
-        attr = re.sub(r'(?<!^)(?=[A-Z])', '_', s.field).lower()
+        attr = re.sub(r"(?<!^)(?=[A-Z])", "_", s.field).lower()
         if hasattr(model, attr):
             attr_type = model.__annotations__[attr]
-            if get_origin(attr_type) is UnionType:  
+            if get_origin(attr_type) is UnionType:
                 attr_type = next(t for t in get_args(attr_type) if t is not type(None))
             criteria.append((attr, attr_type.__name__, s.order))
+
     def sort_key(item):
         key = []
-        for (field, field_type, order) in criteria:
+        for field, field_type, order in criteria:
             value = getattr(item, field)
-            if field_type in ['date', 'datetime']:
+            if field_type in ["date", "datetime"]:
                 value = value.toordinal()
             if order == "desc":
                 value = (
@@ -83,4 +86,5 @@ def multiple_sort(model:"Graphemy", items: list["Graphemy"], sort: list["SortMod
                 )
             key.append(value)
         return tuple(key)
+
     return sorted(items, key=sort_key)

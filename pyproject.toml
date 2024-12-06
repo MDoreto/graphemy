@@ -1,61 +1,37 @@
-[tool.poetry]
-name = "graphemy"
-version = "1.0.4"
-description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
-authors = ["Matheus Doreto <matheusdoreto.md@gmail.com>"]
-readme = "README.md"
-packages = [{include = "graphemy"}]
-homepage = "https://github.com/MDoreto/graphemy"
-documentation = "https://graphemy.readthedocs.io/en/latest/"
-repository = "https://github.com/MDoreto/graphemy"
-license = "MIT"
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Topic :: Database",
-    "Topic :: Database :: Database Engines/Servers",
-    "Intended Audience :: Developers",
-    "Framework :: FastAPI",
-    "Programming Language :: Python :: 3.12",
-    "Natural Language :: English",
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest-cov<5.0.0,>=4.1.0",
+    "isort<6.0.0,>=5.12.0",
+    "taskipy<2.0.0,>=1.12.0",
+    "httpx<1.0.0,>=0.27.2",
+    "pytest-env<2.0.0,>=1.1.1",
+    "aiosqlite<1.0.0,>=0.20.0",
+    "gevent<25.0.0,>=24.2.1",
+    "fastapi-cli<1.0.0,>=0.0.5",
+    "pytest<9.0.0,>=8.3.3",
+    "pytest-asyncio==0.21.2",
 ]
-[tool.poetry.urls]
-"Documentation" = "https://graphemy.readthedocs.io/en/latest/"
-"Repository" = "https://github.com/MDoreto/graphemy"
-"Bug Tracker" = "https://github.com/MDoreto/graphemy/issues"
+doc = [
+    "mkdocs-material<10.0.0,>=9.4.7",
+    "mkdocs-macros-plugin<2.0.0,>=1.0.5",
+    "jinja2<4.0.0,>=3.1.2",
+    "mdx-include<2.0.0,>=1.4.2",
+    "mkdocstrings<1.0.0,>=0.26.1",
+    "mkdocstrings-python<2.0.0,>=1.11.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-sqlmodel = "^0.0.22"
-fastapi = "^0.115.5"
-strawberry-graphql = "^0.253.0"
-
-
-[tool.poetry.group.dev.dependencies]
-pytest-cov = "^4.1.0"
-isort = "^5.12.0"
-taskipy = "^1.12.0"
-httpx = "^0.27.2"
-pytest-env = "^1.1.1"
-aiosqlite = "^0.20.0"
-gevent = "^24.2.1"
-fastapi-cli = "^0.0.5"
-pytest = "^8.3.3"
-pytest-asyncio = "0.21.2"
-black = "^24.10.0"
-strawberry-graphql = {extras = ["debug-server"], version = "^0.253.0"}
-
-
-[tool.poetry.group.doc.dependencies]
-mkdocs-material = "^9.4.7"
-mkdocs-macros-plugin = "^1.0.5"
-jinja2 = "^3.1.2"
-mdx-include = "^1.4.2"
-mkdocstrings = "^0.26.1"
-mkdocstrings-python = "^1.11.1"
+[tool.pdm.build]
+includes = ["graphemy"]
+source-includes = [
+    "tests/",
+    "examples/",
+    ]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
 
 [tool.pytest.ini_options]
 pythonpath = "."
@@ -83,3 +59,36 @@ publish = "poetry publish --build"
 exclude_also = [
     "if TYPE_CHECKING:",
     ]
+[project]
+authors = [
+    {name = "Matheus Doreto", email = "matheusdoreto.md@gmail.com"},
+]
+license = {text = "MIT"}
+requires-python = "<4.0,>=3.12"
+dependencies = [
+    "sqlmodel<1.0.0,>=0.0.22",
+    "strawberry-graphql[debug-server]<1.0.0,>=0.240.0",
+    "fastapi<1.0.0,>=0.114.0",
+    "black<25.0.0,>=24.8.0",
+]
+name = "graphemy"
+version = "1.0.4"
+description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
+readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Database",
+    "Topic :: Database :: Database Engines/Servers",
+    "Intended Audience :: Developers",
+    "Framework :: FastAPI",
+    "Programming Language :: Python :: 3.12",
+    "Natural Language :: English",
+]
+
+[project.urls]
+Documentation = "https://graphemy.readthedocs.io/en/latest/"
+Repository = "https://github.com/MDoreto/graphemy"
+"Bug Tracker" = "https://github.com/MDoreto/graphemy/issues"
+homepage = "https://github.com/MDoreto/graphemy"
+repository = "https://github.com/MDoreto/graphemy"
+documentation = "https://graphemy.readthedocs.io/en/latest/"

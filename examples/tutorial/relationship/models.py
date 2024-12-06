@@ -1,8 +1,7 @@
 from datetime import date
+from typing import Optional
 
 from graphemy import Dl, Field, Graphemy
-
-from typing import Optional
 
 
 class Teacher(Graphemy, table=True):
