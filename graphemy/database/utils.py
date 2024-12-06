@@ -1,6 +1,7 @@
 import re
 from datetime import date
-from typing import TYPE_CHECKING, get_type_hints, get_origin, Optional, Union, get_args
+from typing import TYPE_CHECKING,get_args,get_origin
+from types import UnionType
 
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlmodel import and_, bindparam, or_
@@ -59,32 +60,20 @@ def get_filter(
     )
 
 
-def multiple_sort(
-    model: "Graphemy", students: list["Graphemy"], sort: list["SortModel"]
-) -> list["Graphemy"]:
-    criteria = []
-    print(model.__annotations__)
-    type_hints = get_type_hints(model)
-    
-    # Get the field type
+def multiple_sort(model:"Graphemy", items: list["Graphemy"], sort: list["SortModel"]) -> list["Graphemy"]:
+    criteria = []   
     for s in sort:
-        if hasattr(model, s.field):
-            attr = re.sub(r"(?<!^)(?=[A-Z])", "_", s.field).lower()
-            field_type = type_hints.get(s.field)
-    
-    # Handle Optional, str | None
-            if get_origin(field_type) in {Optional, Union}:
-                # Extract the base type, excluding NoneType
-                field_type = next(
-                    arg.__name__ for arg in get_args(field_type) if arg is not type(None)
-                )
-            criteria.append((attr, field_type, s.order))
-    print(criteria)
-    def sort_key(student):
+        attr = re.sub(r'(?<!^)(?=[A-Z])', '_', s.field).lower()
+        if hasattr(model, attr):
+            attr_type = model.__annotations__[attr]
+            if get_origin(attr_type) is UnionType:  
+                attr_type = next(t for t in get_args(attr_type) if t is not type(None))
+            criteria.append((attr, attr_type.__name__, s.order))
+    def sort_key(item):
         key = []
-        for field, field_type, order in criteria:
-            value = getattr(student, field)
-            if field_type in ["date", "datetime"]:
+        for (field, field_type, order) in criteria:
+            value = getattr(item, field)
+            if field_type in ['date', 'datetime']:
                 value = value.toordinal()
             if order == "desc":
                 value = (
@@ -94,5 +83,4 @@ def multiple_sort(
                 )
             key.append(value)
         return tuple(key)
-
-    return sorted(students, key=sort_key)
+    return sorted(items, key=sort_key)
