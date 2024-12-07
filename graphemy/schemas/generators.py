@@ -1,11 +1,9 @@
+from collections.abc import Callable
 from datetime import date
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Callable,
-    Dict,
     Optional,
-    Tuple,
     TypeVar,
     Union,
     get_args,
@@ -33,7 +31,7 @@ T = TypeVar("T")
 
 def set_schema(
     cls: "Graphemy",
-    functions: Dict[str, Tuple[Callable, "Graphemy"]],
+    functions: dict[str, tuple[Callable, "Graphemy"]],
     auto_foreign_keys,
 ) -> None:
     """Set the Strawberry schema for a Graphemy class."""
@@ -43,8 +41,10 @@ def set_schema(
         pass
 
     foreign_keys_info = []
-    for attr in [attr for attr in cls.__dict__.values() if hasattr(attr, "dl")]:
-        returned_class: "Graphemy" = Setup.classes[attr.dl]
+    for attr in [
+        attr for attr in cls.__dict__.values() if hasattr(attr, "dl")
+    ]:
+        returned_class: Graphemy = Setup.classes[attr.dl]
         setattr(
             Schema,
             attr.__name__,
@@ -54,15 +54,19 @@ def set_schema(
                     Setup.get_auth(
                         returned_class,
                         "query",
-                    )
+                    ),
                 ],
             ),
         )
         if attr.foreign_key or (
-            attr.foreign_key == None and auto_foreign_keys and not attr.many
+            attr.foreign_key is None and auto_foreign_keys and not attr.many
         ):
-            source = attr.source if isinstance(attr.source, list) else [attr.source]
-            target = attr.target if isinstance(attr.target, list) else [attr.target]
+            source = (
+                attr.source if isinstance(attr.source, list) else [attr.source]
+            )
+            target = (
+                attr.target if isinstance(attr.target, list) else [attr.target]
+            )
             target = [returned_class.__tablename__ + "." + t for t in target]
 
             if (
@@ -74,21 +78,29 @@ def set_schema(
                     for item in source + target
                 )
             ):
-                cls.__table__.append_constraint(ForeignKeyConstraint(source, target))
+                cls.__table__.append_constraint(
+                    ForeignKeyConstraint(source, target),
+                )
                 foreign_keys_info.append((source, target))
-        if not attr.dl_name in functions:
+        if attr.dl_name not in functions:
             functions[attr.dl_name] = (
                 get_dl_field(attr, returned_class),
                 returned_class,
             )
     if not cls.__strawberry_schema__:
-        extra_schema = strawberry.type(cls.Strawberry, name=f"{cls.__name__}Schema2")
+        extra_schema = strawberry.type(
+            cls.Strawberry,
+            name=f"{cls.__name__}Schema2",
+        )
         strawberry_schema = strawberry.experimental.pydantic.type(
-            cls, all_fields=True, name=f"{cls.__name__}Schema"
+            cls,
+            all_fields=True,
+            name=f"{cls.__name__}Schema",
         )(Schema)
         if extra_schema.__annotations__:
             strawberry_schema = merge_types(
-                f"{cls.__name__}Schema", (strawberry_schema, extra_schema)
+                f"{cls.__name__}Schema",
+                (strawberry_schema, extra_schema),
             )
         cls.__strawberry_schema__ = strawberry_schema
 
@@ -116,7 +128,7 @@ def get_dl_function(
 ) -> Callable[[], Union["Graphemy", list["Graphemy"]]]:
     """Generates a DataLoader function dynamically based on the field's specifications."""
     # Determine if the field_type is a list and extract the inner type
-    is_list = get_origin(field_type) == list
+    is_list = get_origin(field_type) is list
     class_type = get_args(field_type)[0] if is_list else field_type
     # Formulate DataLoader name with consideration for lazy-loaded types
     dl_name = (
@@ -151,8 +163,10 @@ def get_dl_function(
                 [
                     (
                         attr
-                        if type(attr) == int
-                        else attr[1:] if attr.startswith("_") else getattr(self, attr)
+                        if type(attr) is int
+                        else attr[1:]
+                        if attr.startswith("_")
+                        else getattr(self, attr)
                     )
                     for attr in field_value.source
                 ]
@@ -160,7 +174,8 @@ def get_dl_function(
                 else getattr(self, field_value.source)
             )
             result = await info.context[dl_name].load(
-                source_value, {"filters": filter_args}
+                source_value,
+                {"filters": filter_args},
             )
             if sort:
                 result = multiple_sort(Setup.classes[class_type], result, sort)
@@ -178,15 +193,17 @@ def get_dl_function(
                 ]
                 | None
             ) = None,
-        ) -> Optional[return_type]:
+        ) -> return_type | None:
             """The dynamically generated DataLoader function."""
             filter_args = vars(filters) if filters else None
             source_value = (
                 [
                     (
                         attr
-                        if type(attr) == int
-                        else attr[1:] if attr.startswith("_") else getattr(self, attr)
+                        if type(attr) is int
+                        else attr[1:]
+                        if attr.startswith("_")
+                        else getattr(self, attr)
                     )
                     for attr in field_value.source
                 ]
@@ -194,7 +211,8 @@ def get_dl_function(
                 else getattr(self, field_value.source)
             )
             return await info.context[dl_name].load(
-                source_value, {"filters": filter_args}
+                source_value,
+                {"filters": filter_args},
             )
 
     # Customize the function attributes for introspection or other purposes
@@ -214,11 +232,15 @@ def get_query(cls: "Graphemy") -> StrawberryField:
         pass
 
     for field_name, field in cls.__annotations__.items():
-        field = DateFilter if (field == date or field == (date | None)) else list[field]
+        field = (
+            DateFilter
+            if (field == date or field == (date | None))
+            else list[field]
+        )
         setattr(
             Filter,
             field_name,
-            strawberry.field(default=None, graphql_type=Optional[field]),
+            strawberry.field(default=None, graphql_type = field | None),
         )
     filter = strawberry.input(name=f"{cls.__name__}Filter")(Filter)
 
@@ -230,11 +252,19 @@ def get_query(cls: "Graphemy") -> StrawberryField:
     ) -> list[cls.__strawberry_schema__]:
         if not await Setup.has_permission(cls, info.context, "query"):
             return []
-        data = await get_all(cls, filters, Setup.query_filter(cls, info.context), sort)
+        data = await get_all(
+            cls,
+            filters,
+            Setup.query_filter(cls, info.context),
+            sort,
+        )
         return data
 
     return (
-        strawberry.field(query, permission_classes=[Setup.get_auth(cls, "query")]),
+        strawberry.field(
+            query,
+            permission_classes=[Setup.get_auth(cls, "query")],
+        ),
         filter,
     )
 
@@ -249,7 +279,7 @@ def get_put_mutation(cls: "Graphemy") -> StrawberryField:
         setattr(
             Filter,
             field_name,
-            strawberry.field(default=None, graphql_type=Optional[field]),
+            strawberry.field(default=None, graphql_type=field | None),
         )
     input = strawberry.input(name=f"{cls.__name__}Input")(Filter)
 
@@ -273,7 +303,7 @@ def get_delete_mutation(cls: "Graphemy") -> StrawberryField:
             setattr(
                 Filter,
                 field_name,
-                strawberry.field(default=None, graphql_type=Optional[field]),
+                strawberry.field(default=None, graphql_type=field | None),
             )
     input = strawberry.input(name=f"{cls.__name__}InputPk")(Filter)
 

@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Optional
 
 from graphemy import Dl, Field, Graphemy
 
@@ -20,7 +19,7 @@ class Course(Graphemy, table=True):
 
 class Student(Graphemy, table=True):
     id: int | None = Field(primary_key=True, default=None)
-    name: Optional[str]
+    name: str | None
     birth_date: date
     courses: list["StudentCourse"] = Dl(source="id", target="student_id")
 
@@ -31,7 +30,8 @@ class StudentCourse(Graphemy, table=True):
     student: "Student" = Dl(source="student_id", target="id")
     course: "Course" = Dl(source="course_id", target="id")
     grader: list["Grade"] = Dl(
-        source=["student_id", "course_id"], target=["student_id", "course_id"]
+        source=["student_id", "course_id"],
+        target=["student_id", "course_id"],
     )
 
 
@@ -41,5 +41,6 @@ class Grade(Graphemy, table=True):
     grade: float
     semester: int = Field(primary_key=True)
     student_course: "StudentCourse" = Dl(
-        source=["student_id", "course_id"], target=["student_id", "course_id"]
+        source=["student_id", "course_id"],
+        target=["student_id", "course_id"],
     )

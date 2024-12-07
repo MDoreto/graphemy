@@ -8,7 +8,7 @@ def test_query(client_data):
                                 name
                                 birthDate
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -18,8 +18,8 @@ def test_query(client_data):
                 {"id": 1, "name": "Some Name", "birthDate": "1999-09-16"},
                 {"id": 2, "name": "Other Name", "birthDate": "1999-07-24"},
                 {"id": 3, "name": "Another Name", "birthDate": "1998-05-12"},
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -33,7 +33,7 @@ def test_query_filter(client_data):
                                 name
                                 birthDate
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -41,8 +41,8 @@ def test_query_filter(client_data):
         "data": {
             "students": [
                 {"id": 1, "name": "Some Name", "birthDate": "1999-09-16"},
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -59,7 +59,7 @@ def test_relationship(client_data):
                                     name
                                     }
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -73,9 +73,9 @@ def test_relationship(client_data):
                         {"id": 1, "name": "Mathematics"},
                         {"id": 2, "name": "Physics"},
                     ],
-                }
-            ]
-        }
+                },
+            ],
+        },
     }
 
 
@@ -92,7 +92,7 @@ def test_relationship_filter(client_data):
                                     name
                                     }
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -105,9 +105,9 @@ def test_relationship_filter(client_data):
                     "courses": [
                         {"id": 1, "name": "Mathematics"},
                     ],
-                }
-            ]
-        }
+                },
+            ],
+        },
     }
 
 
@@ -126,7 +126,7 @@ def test_relationship_one(client_data):
     }
   }
 }
-                            """
+                            """,
         },
     )
     assert response.status_code == 200
@@ -145,8 +145,8 @@ def test_relationship_one(client_data):
                     "teacherId": 1,
                     "teacher": {"id": 1, "name": "Some Teacher"},
                 },
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -165,7 +165,7 @@ def test_relationship_one_filter(client_data):
     }
   }
 }
-                            """
+                            """,
         },
     )
     assert response.status_code == 200
@@ -179,6 +179,6 @@ def test_relationship_one_filter(client_data):
                     "teacher": None,
                 },
                 {"id": 2, "name": "Physics", "teacherId": 1, "teacher": None},
-            ]
-        }
+            ],
+        },
     }

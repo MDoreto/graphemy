@@ -18,6 +18,8 @@ Graphemy.metadata.create_all(engine)
 
 app = FastAPI()
 router = GraphemyRouter(
-    engine=engine, enable_put_mutations=True, enable_delete_mutations=True
+    engine=engine,
+    enable_put_mutations=True,
+    enable_delete_mutations=True,
 )
 app.include_router(router, prefix="/graphql")

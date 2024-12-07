@@ -9,8 +9,7 @@ from .setup import Setup
 
 
 class Graphemy(SQLModel):
-    """
-    An extension of SQLModel that integrates Strawberry GraphQL functionalities,
+    """An extension of SQLModel that integrates Strawberry GraphQL functionalities,
     enabling the dynamic generation of GraphQL schemas directly from SQLModel definitions.
     This class supports configuring GraphQL operations such as queries and mutations,
     and facilitates the management of permissions for these operations.
@@ -40,6 +39,7 @@ class Graphemy(SQLModel):
 
         Strawberry: An inner class used to encapsulate GraphQL-specific configurations
         and properties for the Graphemy class.
+
     Methods:
         __init_subclass__: Automatically called when a subclass of Graphemy is defined.
             Sets up the necessary GraphQL configurations and registers the subclass in a
@@ -47,6 +47,7 @@ class Graphemy(SQLModel):
         permission_getter: Async static method intended to be overridden to provide
             custom logic for determining user permissions for executing GraphQL queries.
             Should return `True` if the query is permitted, `False` otherwise.
+
     """
 
     __strawberry_schema__: StrawberryType = None
@@ -60,7 +61,11 @@ class Graphemy(SQLModel):
         pass
 
     def __init_subclass__(cls):
-        cls.__tablename__ = re.sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
+        cls.__tablename__ = re.sub(
+            r"(?<!^)(?=[A-Z])",
+            "_",
+            cls.__name__,
+        ).lower()
         cls.__queryname__ = (
             cls.__queryname__ if cls.__queryname__ else cls.__tablename__ + "s"
         )
@@ -71,7 +76,11 @@ class Graphemy(SQLModel):
                 attr_value = getattr(cls, attr_name)
                 if isinstance(attr_value, Dl):
                     to_remove.append(attr_name)
-                    dl_field = get_dl_function(attr_name, attr_type, attr_value)
+                    dl_field = get_dl_function(
+                        attr_name,
+                        attr_type,
+                        attr_value,
+                    )
                     setattr(cls, attr_name, dl_field)
         for attr in to_remove:
             del cls.__annotations__[attr]

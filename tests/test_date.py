@@ -8,7 +8,7 @@ def test_date_year(client_data):
                                 name
                                 birthDate
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -17,8 +17,8 @@ def test_date_year(client_data):
             "students": [
                 {"id": 1, "name": "Some Name", "birthDate": "1999-09-16"},
                 {"id": 2, "name": "Other Name", "birthDate": "1999-07-24"},
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -32,7 +32,7 @@ def test_date_range(client_data):
                                 name
                                 birthDate
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -41,8 +41,8 @@ def test_date_range(client_data):
             "students": [
                 {"id": 2, "name": "Other Name", "birthDate": "1999-07-24"},
                 {"id": 3, "name": "Another Name", "birthDate": "1998-05-12"},
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -56,7 +56,7 @@ def test_date_items(client_data):
                                 name
                                 birthDate
                                 }
-                            }"""
+                            }""",
         },
     )
     assert response.status_code == 200
@@ -64,8 +64,8 @@ def test_date_items(client_data):
         "data": {
             "students": [
                 {"id": 1, "name": "Some Name", "birthDate": "1999-09-16"},
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -84,7 +84,7 @@ def test_date_nested_year(client_data):
       }
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -107,8 +107,8 @@ def test_date_nested_year(client_data):
                     "teacherId": 1,
                     "students": [{"student": None}, {"student": None}],
                 },
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -127,7 +127,7 @@ def test_date_nested_range(client_data):
       }
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -153,8 +153,8 @@ def test_date_nested_range(client_data):
                         {"student": None},
                     ],
                 },
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -173,7 +173,7 @@ def test_date_nested_items(client_data):
       }
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -199,6 +199,6 @@ def test_date_nested_items(client_data):
                         {"student": {"name": "Other Name"}},
                     ],
                 },
-            ]
-        }
+            ],
+        },
     }

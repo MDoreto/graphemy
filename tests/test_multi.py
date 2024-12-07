@@ -19,7 +19,7 @@ def test_multi_query(client_data):
       name
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -30,16 +30,16 @@ def test_multi_query(client_data):
                     "id": 1,
                     "name": "Some Teacher",
                     "courses": [{"id": 2, "name": "Physics"}],
-                }
+                },
             ],
             "teacher2": [
                 {
                     "id": 1,
                     "name": "Some Teacher",
                     "courses": [{"id": 1, "name": "Mathematics"}],
-                }
+                },
             ],
-        }
+        },
     }
 
 
@@ -60,7 +60,7 @@ def test_multi_query_one(client_data):
     }
     name
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -74,7 +74,7 @@ def test_multi_query_one(client_data):
                 {"teacher": None, "name": "Mathematics"},
                 {"teacher": None, "name": "Physics"},
             ],
-        }
+        },
     }
 
 
@@ -96,7 +96,7 @@ def test_multi_key(client_data):
       }
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -131,8 +131,10 @@ def test_multi_key(client_data):
                 {
                     "name": "Another Name",
                     "birthDate": "1998-05-12",
-                    "courses": [{"course": {"name": "Mathematics"}, "grader": []}],
+                    "courses": [
+                        {"course": {"name": "Mathematics"}, "grader": []},
+                    ],
                 },
-            ]
-        }
+            ],
+        },
     }

@@ -35,7 +35,7 @@ def get_filter(
                 for k in range(len(id)):
                     f.append(
                         id[k]
-                        if type(id[k]) == int
+                        if type(id[k]) is int
                         else (
                             id[k][1:]
                             if id[k].startswith("_")
@@ -44,24 +44,25 @@ def get_filter(
                                 f"p{i}_{j}_{k}",
                                 literal_execute=not isinstance(key[k], date),
                             )
-                        )
+                        ),
                     )
                     params[f"p{i}_{j}_{k}"] = key[k]
                 filter.append(and_(*f))
             else:
                 filter.append(False)
         return or_(*filter)
-    elif None in keys:
+    if None in keys:
         keys.remove(None)
     params[f"p{i}"] = keys
-    a = getattr(model, id).in_(bindparam(f"p{i}", expanding=True, literal_execute=True))
     return getattr(model, id).in_(
-        bindparam(f"p{i}", expanding=True, literal_execute=True)
+        bindparam(f"p{i}", expanding=True, literal_execute=True),
     )
 
 
 def multiple_sort(
-    model: "Graphemy", items: list["Graphemy"], sort: list["SortModel"]
+    model: "Graphemy",
+    items: list["Graphemy"],
+    sort: list["SortModel"],
 ) -> list["Graphemy"]:
     criteria = []
     for s in sort:
@@ -69,7 +70,9 @@ def multiple_sort(
         if hasattr(model, attr):
             attr_type = model.__annotations__[attr]
             if get_origin(attr_type) is UnionType:
-                attr_type = next(t for t in get_args(attr_type) if t is not type(None))
+                attr_type = next(
+                    t for t in get_args(attr_type) if t is not type(None)
+                )
             criteria.append((attr, attr_type.__name__, s.order))
 
     def sort_key(item):

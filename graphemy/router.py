@@ -1,7 +1,7 @@
 import inspect
 import sys
+from collections.abc import Callable
 from types import GenericAlias
-from typing import Callable, Dict
 
 import strawberry
 import strawberry.tools
@@ -26,35 +26,36 @@ from .setup import Setup
 
 
 async def fake_dl_one(keys):
-    """
-    A placeholder asynchronous function that simulates fetching single items for each key.
+    """A placeholder asynchronous function that simulates fetching single items for each key.
+
     Args:
         keys (iterable): A collection of keys for which data needs to be fetched.
+
     Returns:
         An iterable of None values corresponding to each key.
+
     """
     return {k: None for k in keys}.values()
 
 
 async def fake_dl_list(keys):
-    """
-    A placeholder asynchronous function that simulates fetching lists of items for each key.
+    """A placeholder asynchronous function that simulates fetching lists of items for each key.
+
     Args:
         keys (iterable): A collection of keys for which data needs to be fetched.
+
     Returns:
         An iterable of empty lists corresponding to each key.
+
     """
     return {k: [] for k in keys}.values()
 
 
 def genre_empty_query():
     class Query:
-        """
-        A class used as a container for defining GraphQL queries. All the resolvers associated
+        """A class used as a container for defining GraphQL queries. All the resolvers associated
         with fetching data are attached to instances of this class or its subclasses.
         """
-
-        pass
 
     return Query
 
@@ -67,23 +68,21 @@ def genre_empty_mutation():
         alter data state in the database, typically involving create, update, and delete operations.
         """
 
-        pass
-
     return Mutation
 
 
 async def hello_world(self, info) -> str:
-    """
-    A simple resolver function returning a greeting message.
+    """A simple resolver function returning a greeting message.
+
     Returns:
         A string greeting 'Hello World'.
+
     """
     return "Hello World"
 
 
 class GraphemyRouter(GraphQLRouter):
-    """
-    A custom router class that sets up a GraphQL API using schemas generated from SQLModel classes.
+    """A custom router class that sets up a GraphQL API using schemas generated from SQLModel classes.
     It handles dynamic query and mutation generation, permissions, and context setup for each request.
 
     Args:
@@ -100,6 +99,7 @@ class GraphemyRouter(GraphQLRouter):
         enable_delete_mutations (bool): Flag to enable DELETE mutations.
         auto_foreign_keys (bool): Flag to automatically handle foreign keys.
         **kwargs: Additional keyword arguments passed to the base GraphQLRouter.
+
     """
 
     functions = []
@@ -112,19 +112,21 @@ class GraphemyRouter(GraphQLRouter):
         permission_getter: Callable | None = None,
         dl_filter: Callable | None = None,
         query_filter: Callable | None = None,
-        engine: Engine | Dict[str, Engine] = None,
-        extensions: list = [],
+        engine: Engine | dict[str, Engine] = None,
+        extensions: list | None = None,
         enable_queries: bool = True,
         enable_put_mutations: bool = False,
         enable_delete_mutations: bool = False,
         auto_foreign_keys: bool = False,
         **kwargs,
     ):
+        if not extensions:
+            extensions = []
         if not query:
             query = genre_empty_query()
         if not mutation:
             mutation = genre_empty_mutation()
-        functions: Dict[str, tuple] = {}
+        functions: dict[str, tuple] = {}
         Setup.setup(
             engine=engine,
             permission_getter=permission_getter,
@@ -134,11 +136,11 @@ class GraphemyRouter(GraphQLRouter):
         need_mutation = True
         for cls in Setup.classes.values():
             set_schema(cls, functions, auto_foreign_keys)
-            if cls.__enable_query__ == None:
+            if cls.__enable_query__ is None:
                 cls.__enable_query__ = enable_queries
-            if cls.__enable_put_mutation__ == None:
+            if cls.__enable_put_mutation__ is None:
                 cls.__enable_put_mutation__ = enable_put_mutations
-            if cls.__enable_delete_mutation__ == None:
+            if cls.__enable_delete_mutation__ is None:
                 cls.__enable_delete_mutation__ = enable_delete_mutations
             cls_query, cls_filter = get_query(cls)
             setattr(
@@ -173,23 +175,27 @@ class GraphemyRouter(GraphQLRouter):
                     get_delete_mutation(cls),
                 )
         if need_query:
-            setattr(
-                query,
-                "hello_world",
-                strawberry.field(hello_world),
-            )
+            query.hello_world = strawberry.field(hello_world)
 
         async def get_context(request: Request, response: Response) -> dict:
-            context = await context_getter(request, response) if context_getter else {}
+            context = (
+                await context_getter(request, response)
+                if context_getter
+                else {}
+            )
             for k, (func, return_class) in functions.items():
                 context[k] = GraphemyDataLoader(
                     load_fn=(
                         func
-                        if await Setup.permission_getter(return_class, context, "query")
+                        if await Setup.permission_getter(
+                            return_class,
+                            context,
+                            "query",
+                        )
                         else (
                             fake_dl_list
                             if type(inspect.signature(func).return_annotation)
-                            == GenericAlias
+                            is GenericAlias
                             else fake_dl_one
                         )
                     ),
@@ -210,15 +216,19 @@ class GraphemyRouter(GraphQLRouter):
         super().__init__(schema=schema, context_getter=get_context, **kwargs)
 
     async def process_result(
-        self, request: Request, result: ExecutionResult
+        self,
+        request: Request,
+        result: ExecutionResult,
     ) -> GraphQLHTTPResponse:
-        """
-        Processes the GraphQL execution result, formatting errors and managing permissions.
+        """Processes the GraphQL execution result, formatting errors and managing permissions.
+
         Args:
             request (Request): The incoming HTTP request.
             result (ExecutionResult): The result from executing a GraphQL operation.
+
         Returns:
             GraphQLHTTPResponse: The formatted response to be returned to the client.
+
         """
         data: GraphQLHTTPResponse = {"data": result.data}
         errors = []
@@ -227,9 +237,11 @@ class GraphemyRouter(GraphQLRouter):
                 format_graphql_error(
                     GraphQLError(
                         "User don't have necessary permissions for this path",
-                        path=[c.__tablename__ for c in request.scope["errors"]],
-                    )
-                )
+                        path=[
+                            c.__tablename__ for c in request.scope["errors"]
+                        ],
+                    ),
+                ),
             )
         if result.errors:
             errors.extend([format_graphql_error(err) for err in result.errors])

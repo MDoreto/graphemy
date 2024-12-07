@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING, Callable, Dict
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import strawberry
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session
 from strawberry.permission import BasePermission
 
 if TYPE_CHECKING:
@@ -12,8 +13,7 @@ if TYPE_CHECKING:
 
 
 class Setup:
-    """
-    A configuration class responsible for setting up and managing database engines, executing queries,
+    """A configuration class responsible for setting up and managing database engines, executing queries,
     and facilitating permission checks for GraphQL operations.
 
     Attributes:
@@ -24,17 +24,17 @@ class Setup:
             operations.
         classes (Dict[str, 'Graphemy']): A registry of model classes that might be involved in GraphQL
             queries or mutations.
+
     """
 
-    engine: Dict[str, Engine] = None
+    engine: dict[str, Engine] = None
     permission_getter: Callable
     async_engine = False
-    classes: Dict[str, "Graphemy"] = {}
+    classes: dict[str, "Graphemy"] = {}
 
     @classmethod
     async def execute_query(cls, query, engine) -> list:
-        """
-        Executes a given SQL query using the specified database engine, either asynchronously or synchronously
+        """Executes a given SQL query using the specified database engine, either asynchronously or synchronously
         based on the engine configuration.
 
         Args:
@@ -43,10 +43,13 @@ class Setup:
 
         Returns:
             list: The result of the query execution, typically a list of database records.
+
         """
         if cls.async_engine:
             async_session = sessionmaker(
-                cls.engine[engine], class_=AsyncSession, expire_on_commit=False
+                cls.engine[engine],
+                class_=AsyncSession,
+                expire_on_commit=False,
             )
             async with async_session() as session:
                 r = await session.execute(query)
@@ -59,20 +62,19 @@ class Setup:
     @classmethod
     def setup(
         cls,
-        engine: Dict[str, Engine] | Engine,
+        engine: dict[str, Engine] | Engine,
         permission_getter=None,
         query_filter=None,
     ):
-        """
-        Configures the database engines and sets default functions for permission checks and query filtering.
+        """Configures the database engines and sets default functions for permission checks and query filtering.
 
         Args:
             engine (Dict[str, Engine] | Engine): A dictionary of engines or a single engine to be used.
             permission_getter (callable): A function to determine if a request is permitted.
             query_filter (callable): A function to filter queries based on specific conditions.
-        """
 
-        if isinstance(engine, Dict):
+        """
+        if isinstance(engine, dict):
             cls.engine = engine
         else:
             cls.engine = {"default": engine}
@@ -97,10 +99,12 @@ class Setup:
 
     @classmethod
     async def has_permission(
-        cls, module: "Graphemy", context: dict, request_type: str
+        cls,
+        module: "Graphemy",
+        context: dict,
+        request_type: str,
     ) -> bool:
-        """
-        Determines if a user has permission to execute a GraphQL query or mutation based on the
+        """Determines if a user has permission to execute a GraphQL query or mutation based on the
         provided context and request type.
 
         Args:
@@ -110,18 +114,21 @@ class Setup:
 
         Returns:
             A boolean indicating if the user has permission to execute the request.
+
         """
         permission = await module.permission_getter(context, request_type)
         if isinstance(permission, bool):
             return permission
-        else:
-            permission = await cls.permission_getter(module, context, request_type)
+        permission = await cls.permission_getter(
+            module,
+            context,
+            request_type,
+        )
         return permission
 
     @classmethod
     def get_auth(cls, module: "Graphemy", request_type: str) -> BasePermission:
-        """
-        Creates a custom Strawberry GraphQL permission class that performs authentication and authorization checks.
+        """Creates a custom Strawberry GraphQL permission class that performs authentication and authorization checks.
 
         Args:
             module ('Graphemy'): The model class for which permissions are being checked.
@@ -129,17 +136,25 @@ class Setup:
 
         Returns:
             An instance of a Strawberry permission class that can be used to control access to GraphQL operations.
+
         """
 
         class IsAuthenticated(BasePermission):
             async def has_permission(
-                self, source, info: strawberry.Info, **kwargs
+                self,
+                source,
+                info: strawberry.Info,
+                **kwargs,
             ) -> bool:
-                if not await cls.has_permission(module, info.context, request_type):
+                if not await cls.has_permission(
+                    module,
+                    info.context,
+                    request_type,
+                ):
                     info.context["response"].status_code = 403
-                    if not "errors" in info.context["request"].scope:
+                    if "errors" not in info.context["request"].scope:
                         info.context["request"].scope["errors"] = [module]
-                    elif not module in info.context["request"].scope["errors"]:
+                    elif module not in info.context["request"].scope["errors"]:
                         info.context["request"].scope["errors"].append(module)
                 return True
 

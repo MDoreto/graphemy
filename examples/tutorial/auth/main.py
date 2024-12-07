@@ -15,8 +15,16 @@ Graphemy.metadata.create_all(engine)
 
 with Session(engine) as session:
     session.add(Owner(id="1", name="Center 1"))
-    session.add(Resource(id=1, name="Base 1", category="A", owner_id="1", private_id=1))
-    session.add(Resource(id=2, name="Base 2", category="B", owner_id="1", private_id=1))
+    session.add(
+        Resource(
+            id=1, name="Base 1", category="A", owner_id="1", private_id=1,
+        ),
+    )
+    session.add(
+        Resource(
+            id=2, name="Base 2", category="B", owner_id="1", private_id=1,
+        ),
+    )
     session.add(
         Resource(
             id=3,
@@ -24,7 +32,7 @@ with Session(engine) as session:
             category="C",
             owner_id="2",
             private_id=None,
-        )
+        ),
     )
     session.add(Private(id=1, description="Extra 1", owner_id="1"))
     session.commit()

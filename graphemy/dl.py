@@ -4,8 +4,7 @@ from .schemas.models import DateFilter
 
 
 class Dl:
-    """
-    A utility class designed to facilitate the linking of source and target fields
+    """A utility class designed to facilitate the linking of source and target fields
     across different models. This is particularly useful for setting up data loaders
     where fields from one model may depend on fields in another, and if foreign keys should be created based on relationships.
 
@@ -18,6 +17,7 @@ class Dl:
     Raises:
         ValueError: If the types of source and target do not match, or if they are lists
             and do not have the same length.
+
     """
 
     source: str | list[str]
@@ -30,11 +30,11 @@ class Dl:
         target: str | list[str],
         foreign_key: bool = None,
     ):
-        if type(source) != type(target):
-            raise "source and target must have same type"
-        if type(source) == list:
+        if type(source) is not type(target):
+            raise ValueError("Source and target must have the same length.")
+        if type(source) is list:
             if len(source) != len(target):
-                raise "source and target must have same length"
+                raise ValueError("Source and target must have the same length.")
             ids = {}
             for i, id in enumerate(target):
                 ids[id] = source[i]
@@ -46,8 +46,7 @@ class Dl:
 
 
 class GraphemyDataLoader(DataLoader):
-    """
-    A customized DataLoader that handles additional filtering mechanisms during data
+    """A customized DataLoader that handles additional filtering mechanisms during data
     retrieval processes. It is capable of using predefined filter methods to process data
     based on request-specific parameters.
 
@@ -60,6 +59,7 @@ class GraphemyDataLoader(DataLoader):
     Methods:
         load: Overridden to apply filters before returning the data, enhancing the
             DataLoader's functionality to cater to complex querying needs.
+
     """
 
     def __init__(self, filter_method=None, context: dict = None, **kwargs):
@@ -71,7 +71,9 @@ class GraphemyDataLoader(DataLoader):
         filters["keys"] = (
             tuple(keys)
             if isinstance(keys, list)
-            else keys.strip() if isinstance(keys, str) else keys
+            else keys.strip()
+            if isinstance(keys, str)
+            else keys
         )
         data = await super().load(dict_to_tuple(filters))
         if self.filter_method:
@@ -80,8 +82,7 @@ class GraphemyDataLoader(DataLoader):
 
 
 def dict_to_tuple(data: dict) -> tuple:
-    """
-    Converts a dictionary into a tuple, recursively processing nested dictionaries
+    """Converts a dictionary into a tuple, recursively processing nested dictionaries
     and lists to ensure they are in a hashable and comparable format. This is essential
     for caching mechanisms within DataLoaders.
 
@@ -91,6 +92,7 @@ def dict_to_tuple(data: dict) -> tuple:
     Returns:
         tuple: A tuple representation of the original dictionary, suitable for use as
             a key in caching operations.
+
     """
     result = []
     for key, value in data.items():
@@ -104,11 +106,12 @@ def dict_to_tuple(data: dict) -> tuple:
                 sorted(
                     (
                         dict_to_tuple(item)
-                        if isinstance(item, dict) or isinstance(item, DateFilter)
+                        if isinstance(item, dict)
+                        or isinstance(item, DateFilter)
                         else item
                     )
                     for item in value
-                )
+                ),
             )
             result.append((key, nested_tuples))
         else:

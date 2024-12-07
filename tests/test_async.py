@@ -21,12 +21,12 @@ async def test_async_put(client_async):
                     name
                     qtd
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
-        "data": {"putUser": {"id": 1, "name": "Some Name", "qtd": 10}}
+        "data": {"putUser": {"id": 1, "name": "Some Name", "qtd": 10}},
     }
 
 
@@ -41,12 +41,12 @@ async def test_async_query(client_async):
                     name
                     qtd
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
-        "data": {"users": [{"id": 1, "name": "Some Name", "qtd": 10}]}
+        "data": {"users": [{"id": 1, "name": "Some Name", "qtd": 10}]},
     }
 
 
@@ -59,7 +59,7 @@ async def test_async_put_with_key(client_async):
                 putUser(params: {name: "Other Name", id:2, qtd:8}) {
                     id
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
@@ -77,12 +77,12 @@ async def test_async_update(client_async):
                     name
                     qtd
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
-        "data": {"putUser": {"id": 1, "name": "Another Name", "qtd": 7}}
+        "data": {"putUser": {"id": 1, "name": "Another Name", "qtd": 7}},
     }
 
 
@@ -95,7 +95,7 @@ async def test_async_delete(client_async):
                 deleteUser(params: {id:1}) {
                     id
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200

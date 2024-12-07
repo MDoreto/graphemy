@@ -4,7 +4,7 @@ def test_auto_foreign_key():
     from sqlmodel import Session, create_engine
     from sqlmodel.pool import StaticPool
 
-    from graphemy import Dl, Field, Graphemy, GraphemyRouter, Setup
+    from graphemy import Dl, Field, Graphemy, GraphemyRouter
 
     class Base(Graphemy, table=True):
         id: int | None = Field(primary_key=True, default=None)
@@ -12,12 +12,16 @@ def test_auto_foreign_key():
         fk_2: str
         center_id: str | None
         extra: "Extra" = Dl(source=["fk_1", "fk_2"], target=["fk_1", "fk_2"])
-        center: "Center" = Dl(source="center_id", target="id", foreign_key=False)
+        center: "Center" = Dl(
+            source="center_id", target="id", foreign_key=False,
+        )
 
     class Extra(Graphemy, table=True):
         fk_1: str = Field(primary_key=True)
         fk_2: str = Field(primary_key=True)
-        base: list["Base"] = Dl(source=["fk_1", "fk_2"], target=["fk_1", "fk_2"])
+        base: list["Base"] = Dl(
+            source=["fk_1", "fk_2"], target=["fk_1", "fk_2"],
+        )
 
     class Center(Graphemy, table=True):
         id: str = Field(primary_key=True)
@@ -58,7 +62,7 @@ def test_auto_foreign_key():
                                     fk2
                                 }
                             
-                        }}"""
+                        }}""",
         },
     )
     assert response.status_code == 200
@@ -77,8 +81,8 @@ def test_auto_foreign_key():
                     "center": None,
                     "extra": {"fk1": "2", "fk2": "1"},
                 },
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -89,7 +93,7 @@ def test_strawberry_class():
     from sqlmodel import Session, create_engine
     from sqlmodel.pool import StaticPool
 
-    from graphemy import Dl, Field, Graphemy, GraphemyRouter, Setup
+    from graphemy import Field, Graphemy, GraphemyRouter
 
     class User(Graphemy, table=True):
         id: int | None = Field(primary_key=True, default=None)
@@ -126,7 +130,7 @@ def test_strawberry_class():
                                 fullName
                             }
                             
-                        }"""
+                        }""",
         },
     )
     assert response.status_code == 200
@@ -138,6 +142,6 @@ def test_strawberry_class():
                     "lastName": "Doe",
                     "fullName": "John Doe",
                 },
-            ]
-        }
+            ],
+        },
     }
