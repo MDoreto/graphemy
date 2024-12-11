@@ -17,14 +17,21 @@ from strawberry.tools import merge_types
 from strawberry.types import Info
 from strawberry.types.field import StrawberryField
 
-from ..database.operations import delete_item, get_all, get_items, put_item
-from ..database.utils import multiple_sort
-from ..dl import Dl
-from ..setup import Setup
-from .models import DateFilter, SortModel
+from graphemy.database.operations import (
+    delete_item,
+    get_all,
+    get_items,
+    put_item,
+)
+from graphemy.database.utils import multiple_sort
+from graphemy.dl import Dl
+from graphemy.setup import Setup
+from types import UnionType
+
+from .models import DateFilter, SortModel, filters
 
 if TYPE_CHECKING:
-    from ..models import Graphemy
+    from graphemy.models import Graphemy
 
 T = TypeVar("T")
 
@@ -126,7 +133,7 @@ def get_dl_function(
     field_type: T,
     field_value: Dl,
 ) -> Callable[[], Union["Graphemy", list["Graphemy"]]]:
-    """Generates a DataLoader function dynamically based on the field's specifications."""
+    """Generate a DataLoader function dynamically based on the field's specifications."""
     # Determine if the field_type is a list and extract the inner type
     is_list = get_origin(field_type) is list
     class_type = get_args(field_type)[0] if is_list else field_type
@@ -157,7 +164,7 @@ def get_dl_function(
             ) = None,
             sort: list[SortModel] | None = None,
         ) -> list[return_type]:
-            """The dynamically generated DataLoader function."""
+            """Generate DataLoader function dynamically."""
             filter_args = vars(filters) if filters else None
             source_value = (
                 [
@@ -194,7 +201,7 @@ def get_dl_function(
                 | None
             ) = None,
         ) -> return_type | None:
-            """The dynamically generated DataLoader function."""
+            """Generate DataLoader function dynamically."""
             filter_args = vars(filters) if filters else None
             source_value = (
                 [
@@ -232,15 +239,23 @@ def get_query(cls: "Graphemy") -> StrawberryField:
         pass
 
     for field_name, field in cls.__annotations__.items():
-        field = (
-            DateFilter
-            if (field == date or field == (date | None))
-            else list[field]
+        if get_origin(field) is UnionType:
+                fieldFilter = next(
+                    t for t in get_args(field) if t is not type(None)
+                )
+        else:
+            fieldFilter = field
+        fieldName = fieldFilter.__name__
+        fieldFilter = (
+            filters[fieldName]
+            if fieldName in filters
+            else list[fieldFilter]
         )
+        print(fieldFilter)
         setattr(
             Filter,
             field_name,
-            strawberry.field(default=None, graphql_type = field | None),
+            strawberry.field(default=None, graphql_type= fieldFilter | None),
         )
     filter = strawberry.input(name=f"{cls.__name__}Filter")(Filter)
 
@@ -252,13 +267,12 @@ def get_query(cls: "Graphemy") -> StrawberryField:
     ) -> list[cls.__strawberry_schema__]:
         if not await Setup.has_permission(cls, info.context, "query"):
             return []
-        data = await get_all(
+        return await get_all(
             cls,
             filters,
             Setup.query_filter(cls, info.context),
             sort,
         )
-        return data
 
     return (
         strawberry.field(

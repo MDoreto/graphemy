@@ -4,13 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, and_, extract, or_, select
 
-from ..schemas.models import DateFilter
-from ..setup import Setup
+from graphemy.schemas.models import DateFilter
+from graphemy.setup import Setup
+
 from .utils import get_filter, get_keys, multiple_sort
 
 if TYPE_CHECKING:
-    from ..models import Graphemy
-    from ..schemas.models import SortModel
+    from graphemy.models import Graphemy
+    from graphemy.schemas.models import SortModel
 
 
 async def get_items(

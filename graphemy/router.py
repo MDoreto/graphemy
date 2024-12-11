@@ -119,7 +119,7 @@ class GraphemyRouter(GraphQLRouter):
         enable_delete_mutations: bool = False,
         auto_foreign_keys: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         if not extensions:
             extensions = []
         if not query:
@@ -220,7 +220,7 @@ class GraphemyRouter(GraphQLRouter):
         request: Request,
         result: ExecutionResult,
     ) -> GraphQLHTTPResponse:
-        """Processes the GraphQL execution result, formatting errors and managing permissions.
+        """Process the GraphQL execution result, formatting errors and managing permissions.
 
         Args:
             request (Request): The incoming HTTP request.

@@ -5,12 +5,12 @@ import strawberry
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import Select
 from sqlmodel import Session
 from strawberry.permission import BasePermission
 
 if TYPE_CHECKING:
     from .models import Graphemy
-
 
 class Setup:
     """A configuration class responsible for setting up and managing database engines, executing queries,
@@ -29,12 +29,12 @@ class Setup:
 
     engine: dict[str, Engine] = None
     permission_getter: Callable
-    async_engine = False
+    async_engine: bool = False
     classes: dict[str, "Graphemy"] = {}
 
     @classmethod
-    async def execute_query(cls, query, engine) -> list:
-        """Executes a given SQL query using the specified database engine, either asynchronously or synchronously
+    async def execute_query(cls, query: Select, engine: Engine) -> list:
+        """Execute a given SQL query using the specified database engine, either asynchronously or synchronously
         based on the engine configuration.
 
         Args:
@@ -56,17 +56,16 @@ class Setup:
                 return r.scalars().all()
         else:
             with Session(cls.engine[engine]) as session:
-                r = session.exec(query).all()
-                return r
+                return session.exec(query).all()
 
     @classmethod
     def setup(
         cls,
         engine: dict[str, Engine] | Engine,
-        permission_getter=None,
-        query_filter=None,
-    ):
-        """Configures the database engines and sets default functions for permission checks and query filtering.
+        permission_getter: Callable | None = None,
+        query_filter: Callable | None = None,
+    ) -> None:
+        """Configure the database engines and sets default functions for permission checks and query filtering.
 
         Args:
             engine (Dict[str, Engine] | Engine): A dictionary of engines or a single engine to be used.
@@ -84,7 +83,9 @@ class Setup:
             cls.query_filter = query_filter
         else:
 
-            def query_filter_default(cls, info):
+            def query_filter_default(
+                _cls: "Graphemy", _info: strawberry.Info,
+            ) -> bool:
                 return True
 
             cls.query_filter = query_filter_default
@@ -92,7 +93,9 @@ class Setup:
             cls.permission_getter = permission_getter
         else:
 
-            async def permission_getter(module_class, info, type):
+            async def permission_getter(
+                _module_class: "Graphemy", _info: strawberry.Info, _type: str,
+            ) -> bool:
                 return True
 
             cls.permission_getter = permission_getter
@@ -104,7 +107,7 @@ class Setup:
         context: dict,
         request_type: str,
     ) -> bool:
-        """Determines if a user has permission to execute a GraphQL query or mutation based on the
+        """Determine if a user has permission to execute a GraphQL query or mutation based on the
         provided context and request type.
 
         Args:
@@ -119,16 +122,15 @@ class Setup:
         permission = await module.permission_getter(context, request_type)
         if isinstance(permission, bool):
             return permission
-        permission = await cls.permission_getter(
+        return await cls.permission_getter(
             module,
             context,
             request_type,
         )
-        return permission
 
     @classmethod
     def get_auth(cls, module: "Graphemy", request_type: str) -> BasePermission:
-        """Creates a custom Strawberry GraphQL permission class that performs authentication and authorization checks.
+        """Create a custom Strawberry GraphQL permission class that performs authentication and authorization checks.
 
         Args:
             module ('Graphemy'): The model class for which permissions are being checked.
@@ -142,9 +144,9 @@ class Setup:
         class IsAuthenticated(BasePermission):
             async def has_permission(
                 self,
-                source,
+                _source: str,
                 info: strawberry.Info,
-                **kwargs,
+                **_kwargs: dict,
             ) -> bool:
                 if not await cls.has_permission(
                     module,

@@ -10,7 +10,7 @@ from graphemy.setup import Setup
 __all__ = ["Dl", "Field", "Graphemy", "GraphemyRouter", "Setup"]
 
 
-def import_files(path):
+def import_files(path) -> None:
     """Recursively imports all Python files found in the specified directory and its subdirectories,
     excluding `__init__.py`. This function is intended to facilitate the dynamic loading of modules,
     particularly useful in scenarios like automatic model discovery in web applications.

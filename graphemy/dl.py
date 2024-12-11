@@ -28,13 +28,17 @@ class Dl:
         self,
         source: str | list[str],
         target: str | list[str],
-        foreign_key: bool = None,
-    ):
+        foreign_key: bool | None = None,
+    ) -> None:
         if type(source) is not type(target):
-            raise ValueError("Source and target must have the same length.")
+            msg = "Source and target must have the same length."
+            raise ValueError(msg)
         if type(source) is list:
             if len(source) != len(target):
-                raise ValueError("Source and target must have the same length.")
+                msg = "Source and target must have the same length."
+                raise ValueError(
+                    msg,
+                )
             ids = {}
             for i, id in enumerate(target):
                 ids[id] = source[i]
@@ -62,7 +66,7 @@ class GraphemyDataLoader(DataLoader):
 
     """
 
-    def __init__(self, filter_method=None, context: dict = None, **kwargs):
+    def __init__(self, filter_method=None, context: dict | None = None, **kwargs) -> None:
         self.filter_method = filter_method
         self.context = context
         super().__init__(**kwargs)
@@ -106,8 +110,7 @@ def dict_to_tuple(data: dict) -> tuple:
                 sorted(
                     (
                         dict_to_tuple(item)
-                        if isinstance(item, dict)
-                        or isinstance(item, DateFilter)
+                        if isinstance(item, dict | DateFilter)
                         else item
                     )
                     for item in value

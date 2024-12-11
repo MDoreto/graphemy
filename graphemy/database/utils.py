@@ -7,8 +7,8 @@ from sqlalchemy.sql.elements import BinaryExpression
 from sqlmodel import and_, bindparam, or_
 
 if TYPE_CHECKING:
-    from ..models import Graphemy
-    from ..schemas.models import SortModel
+    from graphemy.models import Graphemy
+    from graphemy.schemas.models import SortModel
 
 
 def get_keys(model: "Graphemy", id: str | list[str]) -> tuple | str:

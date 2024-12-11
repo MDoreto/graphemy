@@ -17,12 +17,20 @@ with Session(engine) as session:
     session.add(Owner(id="1", name="Center 1"))
     session.add(
         Resource(
-            id=1, name="Base 1", category="A", owner_id="1", private_id=1,
+            id=1,
+            name="Base 1",
+            category="A",
+            owner_id="1",
+            private_id=1,
         ),
     )
     session.add(
         Resource(
-            id=2, name="Base 2", category="B", owner_id="1", private_id=1,
+            id=2,
+            name="Base 2",
+            category="B",
+            owner_id="1",
+            private_id=1,
         ),
     )
     session.add(
