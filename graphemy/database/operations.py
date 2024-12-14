@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session, and_, extract, or_, select
+from sqlmodel import Session, and_, extract, or_, select, not_
 
 from graphemy.schemas.models import DateFilter
 from graphemy.setup import Setup
@@ -86,6 +86,39 @@ async def get_items(
     return groups.values()
 
 
+def get_query_filter(filters_obj, model, query):
+    value = filters_obj if isinstance(filters_obj, list) else [filters_obj]
+    for item in value:
+        filters = vars(item)
+        for filter in filters:
+            if not getattr(item, filter):
+                continue
+            if filter == 'AND':
+                query.append(and_(*get_query_filter(getattr(item, filter), model, [])))
+            elif filter == 'OR':
+                query.append(or_(*get_query_filter(getattr(item, filter), model, [])))
+            elif filter == 'NOT':
+                query.append(not_(and_(*get_query_filter(getattr(item, filter), model, []))))
+            else:
+                field_obj = getattr(item, filter)
+                field = vars(field_obj)
+                for key in field:
+                    if not getattr(field_obj, key):
+                        continue
+                    if key == 'in_':
+                        query.append(getattr(model, filter).in_(field[key]))
+                    elif key == 'like':
+                        query.append(getattr(model, filter).like(field[key]))
+                    elif key == 'gt':
+                        query.append(getattr(model, filter) > field[key])
+                    elif key == 'gte':
+                        query.append(getattr(model, filter) >= field[key])
+                    elif key == 'lt':
+                        query.append(getattr(model, filter) < field[key])
+                    elif key == 'lte':
+                        query.append(getattr(model, filter) <= field[key])
+    return query
+
 async def get_all(
     model: "Graphemy",
     filters,
@@ -94,21 +127,7 @@ async def get_all(
 ) -> list:
     query = select(model).where(query_filter)
     if filters:
-        filters = vars(filters)
-        for k, v in filters.items():
-            if isinstance(v, DateFilter):
-                if v.year:
-                    query = query.where(
-                        extract("year", getattr(model, k)) == v.year,
-                    )
-                if v.items:
-                    query = query.where(getattr(model, k).in_(v.items))
-                if v.range and v.range[0]:
-                    query = query.where(getattr(model, k) >= (v.range[0]))
-                if v.range and v.range[1]:
-                    query = query.where(getattr(model, k) <= (v.range[1]))
-            elif filters[k]:
-                query = query.where(getattr(model, k).in_(filters[k]))
+        query = query.where(*get_query_filter(filters, model, []))
     r = await Setup.execute_query(query, model.__enginename__)
     if sort and len(sort) > 0:
         r = multiple_sort(model, r, sort)
