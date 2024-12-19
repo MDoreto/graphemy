@@ -18,7 +18,7 @@ class Owner(Graphemy, table=True):
     privates: list["Private"] = Dl(source="id", target="owner_id")
     keys: list["Key"] = Dl(source="id", target="owner_id")
 
-    async def permission_getter(self: dict, request_type: str) -> bool:
+    async def permission_getter(self: dict, _request_type: str) -> bool:
         return "Owner" in self["user"]["classes"]
 
 

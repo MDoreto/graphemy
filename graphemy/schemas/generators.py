@@ -1,9 +1,8 @@
 from collections.abc import Callable
-from datetime import date
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Optional,
     TypeVar,
     Union,
     get_args,
@@ -21,16 +20,17 @@ from graphemy.database.operations import (
     delete_item,
     get_all,
     get_items,
+    multiple_sort,
     put_item,
 )
-from graphemy.database.utils import multiple_sort
-from graphemy.dl import Dl
 from graphemy.setup import Setup
-from types import UnionType
 
-from .models import DateFilter, SortModel, filterModels
+from .models import Order, filter_models
 
 if TYPE_CHECKING:
+    from graphql.pyutils.path import Path
+
+    from graphemy.dl import Dl
     from graphemy.models import Graphemy
 
 T = TypeVar("T")
@@ -38,8 +38,8 @@ T = TypeVar("T")
 
 def set_schema(
     cls: "Graphemy",
-    functions: dict[str, tuple[Callable, "Graphemy"]],
-    auto_foreign_keys,
+    functions: dict[str, tuple[Callable, "Graphemy"]], *,
+    auto_foreign_keys:bool = False,
 ) -> None:
     """Set the Strawberry schema for a Graphemy class."""
 
@@ -112,117 +112,139 @@ def set_schema(
         cls.__strawberry_schema__ = strawberry_schema
 
 
-def get_dl_field(attr, returned_class: "Graphemy") -> callable:
+def get_dl_field(attr: callable, returned_class: "Graphemy") -> callable:
     returned_schema = returned_class.__strawberry_schema__
     if attr.many:
-        returned_schema = list[returned_schema]
+        returned_schema: TypeVar = list[returned_schema]
+
     else:
-        returned_schema = Optional[returned_schema]
+        returned_schema: TypeVar = returned_schema | None
 
     async def dataloader(
         keys: list[tuple],
     ) -> returned_schema:
-        return await get_items(returned_class, keys, attr.target, attr.many)
+        return await get_items(returned_class, keys, attr.target)
 
     dataloader.__name__ = attr.dl_name
     return dataloader
 
 
+def get_path(path:"Path") -> tuple:
+    if path.prev:
+        return (*get_path(path.prev), path.key)
+    return (path.key,)
+
+
 def get_dl_function(
     field_name: str,
-    field_type: T,
-    field_value: Dl,
+    field_type: "T",
+    field_value: "Dl",
 ) -> Callable[[], Union["Graphemy", list["Graphemy"]]]:
-    """Generate a DataLoader function dynamically based on the field's specifications."""
-    # Determine if the field_type is a list and extract the inner type
+    """Dynamically generate a DataLoader function based on the field's specifications.
+    The returned function will be used by Strawberry GraphQL to lazily load related data.
+
+    Parameters
+    ----------
+    field_name : str
+        The name of the field for which the DataLoader function is being generated.
+    field_type : T
+        The Python type annotation associated with the field. This may be a list type.
+    field_value : Dl
+        A data structure holding metadata about the DataLoader, such as source keys, targets,
+        and foreign keys.
+
+    Returns
+    -------
+    Callable
+        A callable DataLoader function that can be attached to a Strawberry field and invoked at runtime.
+
+    """
+    # Check if the field is a list type and extract the inner class type
     is_list = get_origin(field_type) is list
     class_type = get_args(field_type)[0] if is_list else field_type
-    # Formulate DataLoader name with consideration for lazy-loaded types
-    dl_name = (
-        field_value.target
-        if isinstance(field_value.target, str)
-        else "_".join(field_value.target)
-    )
-    dl_name = f"dl_{class_type}_{dl_name}"
+
+    # Construct the DataLoader name based on the target configuration
+    if isinstance(field_value.target, str):
+        dl_target_name = field_value.target
+    else:
+        dl_target_name = "_".join(field_value.target)
+    dl_name = f"dl_{class_type}_{dl_target_name}"
 
     # Define the return type using Strawberry's lazy type resolution
     return_type = Annotated[
         f"{class_type}Schema",
         strawberry.lazy("graphemy.router"),
     ]
+
+    def resolve_attribute(instance:"Graphemy", attr:str | int) -> str | int:
+        if isinstance(attr, int):
+            return attr
+        attr_name = attr[1:] if attr.startswith("_") else attr
+        return getattr(instance, attr_name)
+
+    def resolve_value(instance:"Graphemy")-> list[str|int] | str | int:
+        if isinstance(field_value.source, list):
+            return [
+                resolve_attribute(instance, attr)
+                for attr in field_value.source
+            ]
+        return resolve_attribute(instance, field_value.source)
     if is_list:
 
         async def loader_func(
-            self,
+            self:"Graphemy",
             info: Info,
-            filters: (
+            where: Annotated[
+                f"{class_type}Filter",
+                strawberry.lazy("graphemy.router"),
+            ]
+            | None = None,
+            order_by: list[
                 Annotated[
-                    f"{class_type}Filter",
+                    f"{class_type}OrderBy",
                     strawberry.lazy("graphemy.router"),
                 ]
-                | None
-            ) = None,
-            sort: list[SortModel] | None = None,
+            ]
+            | None = None,
+            offset: int | None = None,
+            limit: int | None = None,
         ) -> list[return_type]:
-            """Generate DataLoader function dynamically."""
-            filter_args = vars(filters) if filters else None
-            source_value = (
-                [
-                    (
-                        attr
-                        if type(attr) is int
-                        else attr[1:]
-                        if attr.startswith("_")
-                        else getattr(self, attr)
-                    )
-                    for attr in field_value.source
-                ]
-                if isinstance(field_value.source, list)
-                else getattr(self, field_value.source)
-            )
-            result = await info.context[dl_name].load(
-                source_value,
-                {"filters": filter_args},
-            )
-            if sort:
-                result = multiple_sort(Setup.classes[class_type], result, sort)
+            value = resolve_value(self)
+            result = await info.context[dl_name].load(value, where)
+            if order_by:
+                result = multiple_sort(
+                    Setup.classes[class_type],
+                    result,
+                    order_by,
+                )
+            if offset or limit:
+                if not hasattr(info.context["request"].state, "count"):
+                    info.context["request"].state.count = {}
+                info.context["request"].state.count[get_path(info.path)] = len(
+                    result,
+                )
+            if offset:
+                result = result[offset:]
+            if limit:
+                result = result[:limit]
+
             return result
 
     else:
-
         async def loader_func(
-            self,
+            self:"Graphemy",
             info: Info,
-            filters: (
-                Annotated[
-                    f"{class_type}Filter",
-                    strawberry.lazy("graphemy.router"),
-                ]
-                | None
-            ) = None,
+            where: Annotated[
+                f"{class_type}Filter",
+                strawberry.lazy("graphemy.router"),
+            ]
+            | None = None,
         ) -> return_type | None:
-            """Generate DataLoader function dynamically."""
-            filter_args = vars(filters) if filters else None
-            source_value = (
-                [
-                    (
-                        attr
-                        if type(attr) is int
-                        else attr[1:]
-                        if attr.startswith("_")
-                        else getattr(self, attr)
-                    )
-                    for attr in field_value.source
-                ]
-                if isinstance(field_value.source, list)
-                else getattr(self, field_value.source)
-            )
-            return await info.context[dl_name].load(
-                source_value,
-                {"filters": filter_args},
-            )
+            value = resolve_value(self)
+            result =  await info.context[dl_name].load(value, where)
+            return result[0] if len(result)>0 else None
 
-    # Customize the function attributes for introspection or other purposes
+    # Attach custom attributes to the loader function for introspection
     loader_func.__name__ = field_name
     loader_func.dl = class_type
     loader_func.many = is_list
@@ -238,51 +260,78 @@ def get_query(cls: "Graphemy") -> StrawberryField:
     class Filter:
         pass
 
+    class OrderBy:
+        pass
+
     for field_name, field in cls.__annotations__.items():
+        setattr(
+            OrderBy,
+            field_name,
+            strawberry.field(default=None, graphql_type=Order | None),
+        )
         if get_origin(field) is UnionType:
-                fieldFilter = next(
-                    t for t in get_args(field) if t is not type(None)
-                )
+            field_filter = next(
+                t for t in get_args(field) if t is not type(None)
+            )
         else:
-            fieldFilter = field
-        fieldName = fieldFilter.__name__
-        fieldFilter = (
-            filterModels[fieldName]
-            if fieldName in filterModels
-            else list[fieldFilter]
+            field_filter = field
+        field_type = field_filter.__name__
+        field_filter = (
+            filter_models[field_type]
+            if field_type in filter_models
+            else list[field_filter]
         )
         setattr(
             Filter,
-            field_name,
-            strawberry.field(default=None, graphql_type= fieldFilter | None),
+            field_type,
+            strawberry.field(default=None, graphql_type=field_filter | None),
         )
-    setattr(Filter, "AND", strawberry.field(default=None, graphql_type=list[Filter] | None))
-    setattr(Filter, "OR", strawberry.field(default=None, graphql_type=list[Filter] | None))
-    setattr(Filter, "NOT", strawberry.field(default=None, graphql_type=list[Filter] | None))
-    
-    filter = strawberry.input(name=f"{cls.__name__}Filter")(Filter)
+    Filter.AND = strawberry.field(
+        default=None,
+        graphql_type=list[Filter] | None,
+    )
+    Filter.OR = strawberry.field(
+        default=None,
+        graphql_type=list[Filter] | None,
+    )
+    Filter.NOT = strawberry.field(
+        default=None,
+        graphql_type=list[Filter] | None,
+    )
+
+    filter_ = strawberry.input(name=f"{cls.__name__}Filter")(Filter)
+    order_by = strawberry.input(name=f"{cls.__name__}OrderBy")(OrderBy)
 
     async def query(
-        self,
         info: Info,
-        where: filter | None = None,
-        order_by: list[SortModel] | None = None,
+        where: filter_ | None = None,
+        order_by: list[order_by] | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
     ) -> list[cls.__strawberry_schema__]:
         if not await Setup.has_permission(cls, info.context, "query"):
             return []
-        return await get_all(
+        result, count = await get_all(
             cls,
             where,
             Setup.query_filter(cls, info.context),
             order_by,
+            offset,
+            limit,
         )
+        if count is not None:
+            if not hasattr(info.context["request"].state, "count"):
+                info.context["request"].state.count = {}
+            info.context["request"].state.count[get_path(info.path)] = count
+        return result
 
     return (
         strawberry.field(
             query,
             permission_classes=[Setup.get_auth(cls, "query")],
         ),
-        filter,
+        filter_,
+        order_by,
     )
 
 
@@ -298,9 +347,9 @@ def get_put_mutation(cls: "Graphemy") -> StrawberryField:
             field_name,
             strawberry.field(default=None, graphql_type=field | None),
         )
-    input = strawberry.input(name=f"{cls.__name__}Input")(Filter)
+    input_schema = strawberry.input(name=f"{cls.__name__}Input")(Filter)
 
-    async def mutation(self, params: input) -> cls.__strawberry_schema__:
+    async def mutation(params: input_schema) -> cls.__strawberry_schema__:
         return await put_item(cls, params, pk)
 
     return strawberry.mutation(
@@ -322,9 +371,9 @@ def get_delete_mutation(cls: "Graphemy") -> StrawberryField:
                 field_name,
                 strawberry.field(default=None, graphql_type=field | None),
             )
-    input = strawberry.input(name=f"{cls.__name__}InputPk")(Filter)
+    input_schema = strawberry.input(name=f"{cls.__name__}InputPk")(Filter)
 
-    async def mutation(self, params: input) -> cls.__strawberry_schema__:
+    async def mutation(params: input_schema) -> cls.__strawberry_schema__:
         return await delete_item(cls, params, pk)
 
     return strawberry.mutation(

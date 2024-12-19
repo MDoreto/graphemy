@@ -1,6 +1,13 @@
-from strawberry.dataloader import DataLoader
+from collections.abc import Callable
+from dataclasses import asdict
+from typing import TYPE_CHECKING, Annotated, TypeVar
 
-from .schemas.models import DateFilter
+from strawberry.dataloader import DataLoader
+from strawberry.types.base import StrawberryType
+
+if TYPE_CHECKING:
+    from .models import Graphemy
+import json
 
 
 class Dl:
@@ -40,83 +47,107 @@ class Dl:
                     msg,
                 )
             ids = {}
-            for i, id in enumerate(target):
-                ids[id] = source[i]
+            for i, key in enumerate(target):
+                ids[key] = source[i]
             target.sort()
-            source = [ids[id] for id in target]
+            source = [ids[key] for key in target]
         self.source = source
         self.target = target
         self.foreign_key = foreign_key
 
 
+ReturnType: TypeVar = list["Graphemy"] | Annotated["Graphemy", ".models"] | None
+
+
+
 class GraphemyDataLoader(DataLoader):
-    """A customized DataLoader that handles additional filtering mechanisms during data
-    retrieval processes. It is capable of using predefined filter methods to process data
-    based on request-specific parameters.
-
-    Attributes:
-        filter_method (callable): A method that applies additional filtering to the data
-            based on the request context and specified filters.
-        context: The context of the request, used to pass additional parameters to the
-            filter_method.
-
-    Methods:
-        load: Overridden to apply filters before returning the data, enhancing the
-            DataLoader's functionality to cater to complex querying needs.
-
+    """A specialized DataLoader for loading Graphemy objects with optional filtering.
+    The loader expects keys along with optional filtering and ordering arguments.
     """
 
-    def __init__(self, filter_method=None, context: dict | None = None, **kwargs) -> None:
+    def __init__(
+        self,
+        filter_method: Callable[[ReturnType, dict | None], ReturnType]
+        | None = None,
+        context: dict | None = None,
+        **kwargs:dict,
+    ) -> None:
+        """Initialize the GraphemyDataLoader.
+
+        Parameters
+        ----------
+        filter_method : Callable[[ReturnType, dict | None], ReturnType] | None
+            An optional callable to further filter or modify the data after it is loaded.
+            It receives the loaded data and the context as arguments.
+        context : dict | None
+            Optional context information to be passed to the filter method.
+        kwargs : dict
+            Additional arguments passed to the parent DataLoader.
+
+        """
         self.filter_method = filter_method
         self.context = context
         super().__init__(**kwargs)
 
-    async def load(self, keys, filters: dict | None):
-        filters["keys"] = (
-            tuple(keys)
-            if isinstance(keys, list)
-            else keys.strip()
-            if isinstance(keys, str)
-            else keys
+    async def load(
+        self,
+        keys:list,
+        where: StrawberryType | None = None,
+        order_by: StrawberryType | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> ReturnType:
+        """Load data given keys, an optional 'where' filter, and optional 'order_by' instructions.
+
+        Parameters
+        ----------
+        keys : str | list[str] | tuple[str, ...]
+            The identifying keys for which data should be loaded.
+        where : object | None
+            A Strawberry input type instance representing filtering conditions.
+        order_by : object | None
+            A Strawberry input type instance representing ordering instructions.
+
+        Returns
+        -------
+        ReturnType
+            The loaded data, potentially filtered by the filter_method if provided.
+
+        """
+        if isinstance(keys, list):
+            normalized_keys = tuple(keys)
+        elif isinstance(keys, str):
+            normalized_keys = keys.strip()
+        else:
+            normalized_keys = keys
+        data = await super().load(
+            (
+                normalized_keys,
+                class_to_string(where),
+                class_to_string(order_by),
+                offset,
+                limit,
+            ),
         )
-        data = await super().load(dict_to_tuple(filters))
         if self.filter_method:
             data = self.filter_method(data, self.context)
         return data
 
 
-def dict_to_tuple(data: dict) -> tuple:
-    """Converts a dictionary into a tuple, recursively processing nested dictionaries
-    and lists to ensure they are in a hashable and comparable format. This is essential
-    for caching mechanisms within DataLoaders.
+def class_to_string(cls: StrawberryType | None) -> str | None:
+    """Convert a Strawberry input type instance to its JSON string representation.
+    If cls is None, return None.
 
-    Args:
-        data (dict): The dictionary to be converted.
+    Parameters
+    ----------
+    cls : object | None
+        A Strawberry input type instance or None.
 
-    Returns:
-        tuple: A tuple representation of the original dictionary, suitable for use as
-            a key in caching operations.
+    Returns
+    -------
+    str | None
+        A JSON string representation of the object's data if cls is not None,
+        otherwise None.
 
     """
-    result = []
-    for key, value in data.items():
-        if isinstance(value, DateFilter):
-            value = vars(value)
-        if isinstance(value, dict):
-            nested_tuples = dict_to_tuple(value)
-            result.append((key, nested_tuples))
-        elif isinstance(value, list):
-            nested_tuples = tuple(
-                sorted(
-                    (
-                        dict_to_tuple(item)
-                        if isinstance(item, dict | DateFilter)
-                        else item
-                    )
-                    for item in value
-                ),
-            )
-            result.append((key, nested_tuples))
-        else:
-            result.append((key, value))
-    return tuple(sorted(result))
+    return json.dumps(asdict(cls), sort_keys=True) if cls else None

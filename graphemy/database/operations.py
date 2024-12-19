@@ -1,141 +1,95 @@
+import json
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session, and_, extract, or_, select, not_
+from sqlalchemy.sql.elements import AsBoolean
+from sqlmodel import Session, and_, func, or_, select
 
-from graphemy.schemas.models import DateFilter
 from graphemy.setup import Setup
 
-from .utils import get_filter, get_keys, multiple_sort
+from .utils import get_query_filter, multiple_sort
 
 if TYPE_CHECKING:
     from graphemy.models import Graphemy
-    from graphemy.schemas.models import SortModel
-
 
 async def get_items(
     model: "Graphemy",
     parameters: list[tuple],
-    id: str | list[str] = "id",
-    many: bool = True,
-):
+    key_id: str | list[str] = "id",
+) -> list[list["Graphemy"] | None]:
     groups = {}
-    id_groups = {}
-    filters = {}
-    params = {}
     for p in parameters:
-        f = p[0]
-        if f not in filters:
-            filters[f] = []
-        filters[f].append(p[1][1])
-        groups[p] = [] if many else None
-        if p[1][1] not in id_groups:
-            id_groups[p[1][1]] = []
-        id_groups[p[1][1]].append(p)
-    query = select(model)
-    query_filters = []
-    for i, f in enumerate(filters):
-        if f[1]:
-            filter_temp = []
-            for k, v in f[1]:
-                if v:
-                    if isinstance(v[0], tuple):
-                        if v[2][1]:
-                            filter_temp.append(
-                                extract("year", getattr(model, k)) == v[2][1],
-                            )
-                        if v[0][1]:
-                            filter_temp.append(
-                                getattr(model, k).in_(list(v[0][1])),
-                            )
-                        if v[1][1] and v[1][1][0]:
-                            filter_temp.append(getattr(model, k) >= v[1][1][0])
-                        if v[1][1] and v[1][1][1]:
-                            filter_temp.append(getattr(model, k) <= v[1][1][1])
-                    else:
-                        filter_temp.append(getattr(model, k).in_(v))
+        filters = p[1]
+        if filters not in groups:
+            groups[filters] = {}
+        if p[0] not in groups[filters]:
+            groups[filters][p[0]] = []
+    for filter_str, filter_value in groups.items():
+        query = select(model)
+        if isinstance(key_id, list):
+            conditions = [
+                and_(
+                    *[
+                        getattr(model, column) == key[i]
+                        for i, column in enumerate(key_id)
+                    ],
+                )
+                for key in filter_value
+            ]
+            query = query.where(or_(*conditions))
         else:
-            filter_temp = [True]
-
-        query_filters.append(
-            and_(*filter_temp, get_filter(model, filters[f], id, params, i)),
+            query = query.where(getattr(model, key_id).in_(filter_value.values()))
+        if filter_str:
+            query_filter = json.loads(filter_str)
+        query_filter = (
+            get_query_filter(filter, query_filter, []) if filter_str else [True]
         )
-    results = await Setup.execute_query(
-        query.where(or_(*query_filters)).params(**params),
-        model.__enginename__,
-    )
-    for r in results:
-        temp = id_groups[get_keys(r, id)]
+        results = await Setup.execute_query(
+            select(model).where(*query_filter),
+            model.__enginename__,
+        )
+        for r in results:
+            key = (
+                tuple([getattr(r, i) for i in key_id])
+                if isinstance(key_id, list)
+                else getattr(r, key_id)
+            )
+            filter_value[key].append(r)
+    final = []
+    [final.extend(value.values()) for value in groups.values()]
+    return final
 
-        if len(temp) == 1:
-            key = temp[0]
-            if many:
-                groups[key].append(r)
-            else:
-                groups[key] = r
-        else:
-            for t in temp:
-                if not t[0][1] or all(
-                    getattr(r, k) in v for k, v in t[0][1] if v
-                ):
-                    if many:
-                        groups[t].append(r)
-                    else:
-                        groups[t] = r
-    return groups.values()
-
-
-def get_query_filter(filters_obj, model, query):
-    value = filters_obj if isinstance(filters_obj, list) else [filters_obj]
-    for item in value:
-        filters = vars(item)
-        for filter in filters:
-            if not getattr(item, filter):
-                continue
-            if filter == 'AND':
-                query.append(and_(*get_query_filter(getattr(item, filter), model, [])))
-            elif filter == 'OR':
-                query.append(or_(*get_query_filter(getattr(item, filter), model, [])))
-            elif filter == 'NOT':
-                query.append(not_(and_(*get_query_filter(getattr(item, filter), model, []))))
-            else:
-                field_obj = getattr(item, filter)
-                field = vars(field_obj)
-                for key in field:
-                    if not getattr(field_obj, key):
-                        continue
-                    if key == 'in_':
-                        query.append(getattr(model, filter).in_(field[key]))
-                    elif key == 'like':
-                        query.append(getattr(model, filter).like(field[key]))
-                    elif key == 'gt':
-                        query.append(getattr(model, filter) > field[key])
-                    elif key == 'gte':
-                        query.append(getattr(model, filter) >= field[key])
-                    elif key == 'lt':
-                        query.append(getattr(model, filter) < field[key])
-                    elif key == 'lte':
-                        query.append(getattr(model, filter) <= field[key])
-    return query
 
 async def get_all(
     model: "Graphemy",
-    filters,
-    query_filter,
-    sort: list["SortModel"] | None = None,
-) -> list:
+    filters: "Graphemy",
+    query_filter:AsBoolean,
+    sort: list["Graphemy"] | None,
+    offset: int | None,
+    limit: int | None,
+) -> tuple[list["Graphemy"], int | None]:
     query = select(model).where(query_filter)
     if filters:
-        query = query.where(*get_query_filter(filters, model, []))
+        query = query.where(*get_query_filter(asdict(filters), model, []))
+    if offset or limit:
+        count = await Setup.execute_query(select(func.count()).select_from(query), model.__enginename__)
+        count = count[0]
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+    else:
+        count = None
     r = await Setup.execute_query(query, model.__enginename__)
     if sort and len(sort) > 0:
         r = multiple_sort(model, r, sort)
-    return r
+    return r, count
 
 
-async def put_item(model: "Graphemy", item, id="id"):
-    id = [getattr(item, i) for i in id]
+async def put_item(model: "Graphemy", item:"Graphemy", key:list[str]) -> "Graphemy":
+    key = [getattr(item, i) for i in key]
     kwargs = vars(item)
     engine = Setup.engine[model.__enginename__]
     if Setup.async_engine:
@@ -145,10 +99,10 @@ async def put_item(model: "Graphemy", item, id="id"):
             expire_on_commit=False,
         )
         async with async_session() as session:
-            if not id or None in id:
+            if not key or None in key:
                 new_item = model(**kwargs)
             else:
-                new_item = await session.get(model, id)
+                new_item = await session.get(model, key)
                 if not new_item:
                     new_item = model(**kwargs)
                 for key, value in kwargs.items():
@@ -172,8 +126,8 @@ async def put_item(model: "Graphemy", item, id="id"):
     return new_item
 
 
-async def delete_item(model: "Graphemy", item, id="id"):
-    id = [getattr(item, i) for i in id]
+async def delete_item(model: "Graphemy", item:"Graphemy", key:list[str]) -> "Graphemy":
+    key = [getattr(item, i) for i in key]
     engine = Setup.engine[model.__enginename__]
     if Setup.async_engine:
         async_session = sessionmaker(
@@ -182,12 +136,12 @@ async def delete_item(model: "Graphemy", item, id="id"):
             expire_on_commit=False,
         )
         async with async_session() as session:
-            item = await session.get(model, id)
+            item = await session.get(model, key)
             await session.delete(item)
             await session.commit()
     else:
         with Session(engine) as session:
-            item = session.get(model, id)
+            item = session.get(model, key)
             session.delete(item)
             session.commit()
     return item

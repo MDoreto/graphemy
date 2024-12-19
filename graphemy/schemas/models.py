@@ -3,6 +3,7 @@ from enum import Enum
 
 import strawberry
 
+
 @strawberry.enum
 class Order(Enum):
     asc = "asc"
@@ -10,14 +11,10 @@ class Order(Enum):
 
 
 @strawberry.input
-class SortModel:
-    field: str
-    order: Order
-
-@strawberry.input
 class StringFilter:
     in_: list[str] | None = strawberry.field(name="in", default=None)
     like: str | None = None
+
 
 @strawberry.input
 class IntFilter:
@@ -26,6 +23,7 @@ class IntFilter:
     gte: int | None = None
     lt: int | None = None
     lte: int | None = None
+
 
 @strawberry.input
 class FloatFilter:
@@ -43,6 +41,7 @@ class DateFilter:
     lt: date | None = None
     lte: date | None = None
 
+
 @strawberry.input
 class DateTimeFilter:
     gt: datetime | None = None
@@ -50,8 +49,17 @@ class DateTimeFilter:
     lt: datetime | None = None
     lte: datetime | None = None
 
+
 @strawberry.input
 class BoolFilter:
     in_: list[bool] | None = strawberry.field(name="in", default=None)
 
-filterModels = { "str": StringFilter, "int": IntFilter, "float": FloatFilter, "date": DateFilter, "datetime": DateTimeFilter, "bool": BoolFilter }
+
+filter_models = {
+    "str": StringFilter,
+    "int": IntFilter,
+    "float": FloatFilter,
+    "date": DateFilter,
+    "datetime": DateTimeFilter,
+    "bool": BoolFilter,
+}

@@ -1,81 +1,76 @@
-import re
-from datetime import date
 from types import UnionType
 from typing import TYPE_CHECKING, get_args, get_origin
 
-from sqlalchemy.sql.elements import BinaryExpression
-from sqlmodel import and_, bindparam, or_
+from sqlalchemy import and_, not_, or_
 
 if TYPE_CHECKING:
+    from strawberry.types.base import StrawberryType
+
     from graphemy.models import Graphemy
-    from graphemy.schemas.models import SortModel
 
 
-def get_keys(model: "Graphemy", id: str | list[str]) -> tuple | str:
-    if isinstance(id, list):
-        return tuple([getattr(model, id[i]) for i in range(len(id))])
-    value = getattr(model, id)
-    if isinstance(value, str):
-        value = value.strip()
-    return value
+def get_query_filter(filters_obj:"Graphemy", model:"Graphemy", query:list) -> list:
+    # Ensure filters_obj is always a list for uniform handling
+    filters_list = filters_obj if isinstance(filters_obj, list) else [filters_obj]
 
+    # Define mappings for logical operators
+    logical_ops = {
+        "AND": lambda f: and_(*get_query_filter(f, model, [])),
+        "OR": lambda f: or_(*get_query_filter(f, model, [])),
+        "NOT": lambda f: not_(and_(*get_query_filter(f, model, []))),
+    }
 
-def get_filter(
-    model: "Graphemy",
-    keys: tuple,
-    id: str | list[str],
-    params: dict,
-    i: int,
-) -> BinaryExpression:
-    if isinstance(id, list):
-        filter = []
-        for j, key in enumerate(keys):
-            f = []
-            if None not in key:
-                for k in range(len(id)):
-                    f.append(
-                        id[k]
-                        if type(id[k]) is int
-                        else (
-                            id[k][1:]
-                            if id[k].startswith("_")
-                            else getattr(model, id[k])
-                            == bindparam(
-                                f"p{i}_{j}_{k}",
-                                literal_execute=not isinstance(key[k], date),
-                            )
-                        ),
-                    )
-                    params[f"p{i}_{j}_{k}"] = key[k]
-                filter.append(and_(*f))
+    # Define mappings for field-level operators
+    field_ops = {
+        "in_":  lambda col, val: col.in_(val),
+        "like": lambda col, val: col.like(val),
+        "gt":   lambda col, val: col > val,
+        "gte":  lambda col, val: col >= val,
+        "lt":   lambda col, val: col < val,
+        "lte":  lambda col, val: col <= val,
+    }
+
+    for group in filters_list:
+        for op_name, op_value in group.items():
+            # Skip empty values
+            if not op_value:
+                continue
+
+            # If it's a logical operator (AND, OR, NOT)
+            if op_name in logical_ops:
+                query.append(logical_ops[op_name](op_value))
             else:
-                filter.append(False)
-        return or_(*filter)
-    if None in keys:
-        keys.remove(None)
-    params[f"p{i}"] = keys
-    return getattr(model, id).in_(
-        bindparam(f"p{i}", expanding=True, literal_execute=True),
-    )
+                # It's a field filter
+                for field_op, field_val in op_value.items():
+                    if field_val:
+                        column = getattr(model, op_name)
+                        query_op = field_ops.get(field_op)
+                        if query_op:
+                            query.append(query_op(column, field_val))
+
+    return query
 
 
 def multiple_sort(
     model: "Graphemy",
     items: list["Graphemy"],
-    sort: list["SortModel"],
+    sort: list["StrawberryType"],
 ) -> list["Graphemy"]:
     criteria = []
     for s in sort:
-        attr = re.sub(r"(?<!^)(?=[A-Z])", "_", s.field).lower()
-        if hasattr(model, attr):
-            attr_type = model.__annotations__[attr]
+        for field in model.__annotations__:
+            if getattr(s, field) is None:
+                continue
+            attr_type = model.__annotations__[field]
             if get_origin(attr_type) is UnionType:
                 attr_type = next(
                     t for t in get_args(attr_type) if t is not type(None)
                 )
-            criteria.append((attr, attr_type.__name__, s.order))
+            criteria.append(
+                (field, attr_type.__name__, getattr(s, field).value),
+            )
 
-    def sort_key(item):
+    def sort_key(item:"Graphemy") -> tuple:
         key = []
         for field, field_type, order in criteria:
             value = getattr(item, field)

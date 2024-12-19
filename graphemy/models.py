@@ -60,7 +60,7 @@ class Graphemy(SQLModel):
     class Strawberry:
         pass
 
-    def __init_subclass__(cls):
+    def __init_subclass__(cls) -> None:
         cls.__tablename__ = re.sub(
             r"(?<!^)(?=[A-Z])",
             "_",

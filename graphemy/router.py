@@ -25,7 +25,7 @@ from .schemas.generators import (
 from .setup import Setup
 
 
-async def fake_dl_one(keys):
+async def fake_dl_one(keys:list) -> list:
     """A placeholder asynchronous function that simulates fetching single items for each key.
 
     Args:
@@ -38,7 +38,7 @@ async def fake_dl_one(keys):
     return {k: None for k in keys}.values()
 
 
-async def fake_dl_list(keys):
+async def fake_dl_list(keys:list) -> list:
     """A placeholder asynchronous function that simulates fetching lists of items for each key.
 
     Args:
@@ -51,7 +51,7 @@ async def fake_dl_list(keys):
     return {k: [] for k in keys}.values()
 
 
-def genre_empty_query():
+def genre_empty_query() -> object:
     class Query:
         """A class used as a container for defining GraphQL queries. All the resolvers associated
         with fetching data are attached to instances of this class or its subclasses.
@@ -60,7 +60,7 @@ def genre_empty_query():
     return Query
 
 
-def genre_empty_mutation():
+def genre_empty_mutation() -> object:
     class Mutation:
         __auto_generated__ = True
         """
@@ -71,7 +71,7 @@ def genre_empty_mutation():
     return Mutation
 
 
-async def hello_world(self, info) -> str:
+async def hello_world() -> str:
     """A simple resolver function returning a greeting message.
 
     Returns:
@@ -102,8 +102,6 @@ class GraphemyRouter(GraphQLRouter):
 
     """
 
-    functions = []
-
     def __init__(
         self,
         query: object | None = None,
@@ -113,12 +111,12 @@ class GraphemyRouter(GraphQLRouter):
         dl_filter: Callable | None = None,
         query_filter: Callable | None = None,
         engine: Engine | dict[str, Engine] = None,
-        extensions: list | None = None,
+        extensions: list | None = None, *,
         enable_queries: bool = True,
         enable_put_mutations: bool = False,
         enable_delete_mutations: bool = False,
         auto_foreign_keys: bool = False,
-        **kwargs,
+        **kwargs:dict,
     ) -> None:
         if not extensions:
             extensions = []
@@ -135,14 +133,14 @@ class GraphemyRouter(GraphQLRouter):
         need_query = True
         need_mutation = True
         for cls in Setup.classes.values():
-            set_schema(cls, functions, auto_foreign_keys)
+            set_schema(cls, functions, auto_foreign_keys=auto_foreign_keys)
             if cls.__enable_query__ is None:
                 cls.__enable_query__ = enable_queries
             if cls.__enable_put_mutation__ is None:
                 cls.__enable_put_mutation__ = enable_put_mutations
             if cls.__enable_delete_mutation__ is None:
                 cls.__enable_delete_mutation__ = enable_delete_mutations
-            cls_query, cls_filter = get_query(cls)
+            cls_query, cls_filter, cls_order_by = get_query(cls)
             setattr(
                 sys.modules[__name__],
                 cls.__name__ + "Schema",
@@ -152,6 +150,11 @@ class GraphemyRouter(GraphQLRouter):
                 sys.modules[__name__],
                 cls.__name__ + "Filter",
                 cls_filter,
+            )
+            setattr(
+                sys.modules[__name__],
+                cls.__name__ + "OrderBy",
+                cls_order_by,
             )
             if cls.__enable_query__:
                 need_query = False
@@ -232,14 +235,12 @@ class GraphemyRouter(GraphQLRouter):
         """
         data: GraphQLHTTPResponse = {"data": result.data}
         errors = []
-        if "errors" in request.scope:
+        if hasattr(request.state, "errors"):
             errors.append(
                 format_graphql_error(
                     GraphQLError(
                         "User don't have necessary permissions for this path",
-                        path=[
-                            c.__tablename__ for c in request.scope["errors"]
-                        ],
+                        path=[c.__tablename__ for c in request.state.errors],
                     ),
                 ),
             )
@@ -247,4 +248,10 @@ class GraphemyRouter(GraphQLRouter):
             errors.extend([format_graphql_error(err) for err in result.errors])
         if len(errors) > 0:
             data["errors"] = errors
+        if hasattr(request.state, "count"):
+            for fields in request.state.count:
+                temp = data["data"]
+                for _f in fields[:-1]:
+                    temp = temp[_f]
+                temp[fields[-1] + "Count"] = request.state.count[fields]
         return data
