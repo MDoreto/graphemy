@@ -3,7 +3,7 @@ def test_date_year(client_data):
         "/graphql",
         json={
             "query": """query MyQuery {
-                            students (filters: {birthDate: {year: 1999}}){
+                            students (where: {birthDate: {gte: "1999-01-01", lt: "2000-01-01"}}) {
                                 id
                                 name
                                 birthDate
@@ -27,7 +27,7 @@ def test_date_range(client_data):
         "/graphql",
         json={
             "query": """query MyQuery {
-                            students (filters: {birthDate: {range: ["1998-04-01","1999-08-25"]}}) {
+                            students (where: {birthDate: {gt: "1998-04-01", lte: "1999-08-25"}}) {
                                 id
                                 name
                                 birthDate
@@ -51,7 +51,7 @@ def test_date_items(client_data):
         "/graphql",
         json={
             "query": """query MyQuery {
-                            students (filters: {birthDate: {items: "1999-09-16"}}){
+                            students (where: {birthDate: {in: "1999-09-16"}}){
                                 id
                                 name
                                 birthDate
@@ -79,7 +79,7 @@ def test_date_nested_year(client_data):
     name
     teacherId
     students {
-      student(filters: {birthDate: {year: 1998}}) {
+      student(where: {birthDate: {gte: "1998-01-01", lt: "1999-01-01"}}) {
         name
       }
     }
@@ -122,7 +122,7 @@ def test_date_nested_range(client_data):
     name
     teacherId
     students {
-      student(filters: {birthDate: {range: ["1999-08-01","1999-10-25"]}}) {
+      student(where: {birthDate: {gt:"1999-08-01", lte:"1999-10-25"}}) {
         name
       }
     }
@@ -168,7 +168,7 @@ def test_date_nested_items(client_data):
     name
     teacherId
     students {
-      student(filters: {birthDate: {items: ["1999-07-24"]}}) {
+      student(where: {birthDate: {in: ["1999-07-24"]}}) {
         name
       }
     }

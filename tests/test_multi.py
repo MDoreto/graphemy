@@ -6,7 +6,7 @@ def test_multi_query(client_data):
   teachers {
     id
     name
-    courses(filters: {id: 2}) {
+    courses(where: {id: {in: 2}}) {
       id
       name
     }
@@ -14,7 +14,7 @@ def test_multi_query(client_data):
   teacher2: teachers {
     id
     name
-    courses(filters: {id: 1}) {
+    courses(where: {id: {in: 1} }) {
       id
       name
     }
@@ -49,13 +49,13 @@ def test_multi_query_one(client_data):
         json={
             "query": """query MyQuery {
   courses {
-    teacher(filters: {id: 1}) {
+    teacher(where: {id: { in: 1 }}) {
       name
     }
     name
   }
   courses2: courses {
-    teacher(filters: {id: 2}) {
+    teacher(where: {id: { in: 2} }) {
       name
     }
     name

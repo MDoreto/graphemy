@@ -15,7 +15,7 @@ def test_class_permission(client_auth):
         "data": {"privates": []},
         "errors": [
             {
-                "message": "User don't have necessary permissions for this path",
+                "message": "User doesn't have necessary permissions for this path",
                 "path": ["private"],
             },
         ],
@@ -51,7 +51,7 @@ def test_permission_dl(client_auth):
         },
         "errors": [
             {
-                "message": "User don't have necessary permissions for this path",
+                "message": "User doesn't have necessary permissions for this path",
                 "path": ["private", "key"],
             },
         ],
@@ -84,7 +84,7 @@ def test_permission_dl_one(client_auth):
         },
         "errors": [
             {
-                "message": "User don't have necessary permissions for this path",
+                "message": "User doesn't have necessary permissions for this path",
                 "path": ["private"],
             },
         ],

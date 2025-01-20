@@ -69,7 +69,7 @@ def test_dl_error_length():
 
     with pytest.raises(BaseException):
 
-        class Test(Graphemy, table=True):
+        class Something(Graphemy, table=True):
             id: int | None = Field(primary_key=True, default=None)
             test1: str
 
@@ -77,7 +77,7 @@ def test_dl_error_length():
             id: int | None = Field(primary_key=True, default=None)
             first_name: str
             last_name: str
-            test: "Test" = Dl(source=["test1", "test2"], target=["test1"])
+            something: "Something" = Dl(source=["test1", "test2"], target=["test1"])
 
 
 def test_composite_with_null():
