@@ -1,11 +1,11 @@
 
-from pathlib import Path
-
 from fastapi import FastAPI
 from sqlmodel import create_engine
 from sqlmodel.pool import StaticPool
-
+from pathlib import Path
 from graphemy import Graphemy, GraphemyRouter, import_files
+
+# from .models import *
 
 import_files(Path(__file__).parent)
 

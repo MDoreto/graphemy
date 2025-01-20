@@ -46,12 +46,12 @@ with Session(engine) as session:
     session.commit()
 
 
-async def get_context(_request:Request, _response:Response) -> dict:
+async def get_context(_request: Request, _response: Response) -> dict:
     user = {"categories": ["A", "B"], "classes": ["Resource", "Owner"]}
     return {"user": user}
 
 
-def dl_filter(data:list["Graphemy"], context:dict) -> list["Graphemy"]:
+def dl_filter(data: list["Graphemy"], context: dict) -> list["Graphemy"]:
     user = context["user"]
     if (
         data
@@ -63,13 +63,15 @@ def dl_filter(data:list["Graphemy"], context:dict) -> list["Graphemy"]:
     return data
 
 
-def query_filter(model:"Graphemy", context:dict) -> bool:
+def query_filter(model: "Graphemy", context: dict) -> bool:
     if model.__name__ == "Resource":
         return model.category.in_(context["user"]["categories"])
     return True
 
 
-async def permission_getter(module_class:"Graphemy", context:dict, _request_type:str) -> bool:
+async def permission_getter(
+    module_class: "Graphemy", context: dict, _request_type: str,
+) -> bool:
     return module_class.__name__ in context["user"]["classes"]
 
 

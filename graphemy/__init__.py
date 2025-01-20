@@ -1,4 +1,5 @@
 import importlib
+import sys
 from pathlib import Path
 
 from sqlmodel import Field
@@ -8,26 +9,36 @@ from graphemy.models import Graphemy
 from graphemy.router import GraphemyRouter
 from graphemy.setup import Setup
 
+
+# Expose these names when doing `from graphemy import *`
 __all__ = ["Dl", "Field", "Graphemy", "GraphemyRouter", "Setup"]
 
 
-def import_files(path:Path) -> None:
-    """Recursively imports all Python files found in the specified directory and its subdirectories,
-    excluding `__init__.py`. This function is intended to facilitate the dynamic loading of modules,
-    particularly useful in scenarios like automatic model discovery in web applications.
+def import_files(path: Path) -> None:
+    """
+    Recursively import all Python files under a given directory, except __init__.py.
+    
+    This function dynamically loads Python modules to ensure that any side effects
+    (e.g., model registration, schema generation) occur upon importing them. It
+    can be particularly useful in frameworks where models or routes must be
+    discovered automatically.
 
     Args:
-        path (str): The directory path from which Python files should be imported.
-
-    Note:
-        - This function modifies the global namespace by dynamically importing modules.
-        - Import paths are adjusted to be relative, considering the package structure.
-
+        path (Path): The directory (or subdirectory) to search for Python files
+            to import.
     """
-    for py_file in Path(path).rglob("*.py"):
+    for py_file in path.rglob("*.py"):
+        # Skip __init__.py to avoid unnecessary re-import or conflicts
         if py_file.name == "__init__.py":
             continue
-        # Convert the file path to a module path by removing the .py suffix,
-        # making it relative to `path`, and joining with dots.
+        
+        # Build a module path by joining the file path's components with dots
         module_path = ".".join(py_file.with_suffix("").relative_to(path).parts)
+        
+        # Ensure the path to our target directory is in sys.path so it can be imported
+        root_dir = path.resolve()
+        if str(root_dir) not in sys.path:
+            sys.path.insert(0, str(root_dir))
+
+        # Import the module using Python's importlib
         importlib.import_module(module_path)

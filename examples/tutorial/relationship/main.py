@@ -10,6 +10,7 @@ from examples.tutorial.relationship.models import (
     Student,
     StudentCourse,
     Teacher,
+    School
 )
 from graphemy import Graphemy, GraphemyRouter
 
@@ -21,12 +22,13 @@ engine = create_engine(
 Graphemy.metadata.create_all(engine)
 
 with Session(engine) as session:
-    session.add(Teacher(name="Some Teacher"))
+    session.add(School(name="Some School"))
+    session.add(Teacher(name="Some Teacher", school_id=1))
     session.add(Course(name="Mathematics", teacher_id=1))
     session.add(Course(name="Physics", teacher_id=1))
-    session.add(Student(name="Some Name", birth_date=date(1999, 9, 16)))
-    session.add(Student(name="Other Name", birth_date=date(1999, 7, 24)))
-    session.add(Student(name="Another Name", birth_date=date(1998, 5, 12)))
+    session.add(Student(name="Some Name", birth_date=date(1999, 9, 16), school_id=1))
+    session.add(Student(name="Other Name", birth_date=date(1999, 7, 24), school_id=1))
+    session.add(Student(name="Another Name", birth_date=date(1998, 5, 12), school_id=1))
     session.add(StudentCourse(student_id=1, course_id=1))
     session.add(StudentCourse(student_id=1, course_id=2))
     session.add(StudentCourse(student_id=2, course_id=1))

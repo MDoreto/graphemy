@@ -77,7 +77,7 @@ profile = "black"
 line_length = 79
 
 [tool.taskipy.tasks]
-ex_basic = "fastapi dev examples/tutorial/basic/main:app"
+ex_basic = "fastapi dev examples/tutorial/basic/main.py"
 ex_dl = "fastapi dev examples/tutorial/relationship/main.py"
 lint = "black . && isort ."
 docs = "mkdocs serve"
@@ -108,4 +108,5 @@ ignore = [
     "D", # Docstrings
     "C90", # function is too complex
     "PLR0913", # Too many arguments in function definition
+    "INP001",  # init file
 ]
