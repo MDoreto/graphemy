@@ -13,7 +13,7 @@
 
 ---
 
-**Documentation**: <a href="https://github.com/MDoreto/graphemy" target="_blank">https://github.com/MDoreto/graphemy</a>
+**Documentation**: <a href="https://graphemy.readthedocs.io/" target="_blank">https://graphemy.readthedocs.io/</a>
 
 **Source Code**: <a href="https://github.com/MDoreto/graphemy" target="_blank">https://github.com/MDoreto/graphemy</a>
 

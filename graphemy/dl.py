@@ -50,12 +50,22 @@ class Dl:
                 is a string) or if both are lists of unequal length.
         """
         if type(source) is not type(target):
-            raise ValueError("Source and target must have the same type (str or list).")
+            error_text = (
+                "Source and target must have the same type (str or list)."
+            )
+            raise ValueError(
+                error_text,
+            )
 
         # If both source and target are lists, ensure they are the same length and reorder them
         if isinstance(source, list):
             if len(source) != len(target):
-                raise ValueError("Source and target lists must have the same length.")
+                error_text = (
+                    "Source and target lists must have the same length."
+                )
+                raise ValueError(
+                    error_text,
+                )
 
             # Sort the target for consistent ordering, then reorder the source accordingly
             ids = {}
@@ -92,7 +102,8 @@ class GraphemyDataLoader(DataLoader):
 
     def __init__(
         self,
-        filter_method: Callable[[ReturnType, dict | None], ReturnType] | None = None,
+        filter_method: Callable[[ReturnType, dict | None], ReturnType]
+        | None = None,
         context: dict | None = None,
         **kwargs: dict,
     ) -> None:
@@ -175,7 +186,5 @@ def class_to_string(cls: StrawberryType | None) -> str | None:
             or None if no class was provided.
     """
     return (
-        json.dumps(asdict(cls), sort_keys=True, default=str)
-        if cls
-        else None
+        json.dumps(asdict(cls), sort_keys=True, default=str) if cls else None
     )

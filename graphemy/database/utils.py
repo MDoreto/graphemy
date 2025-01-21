@@ -5,6 +5,7 @@ from sqlalchemy import and_, not_, or_
 
 if TYPE_CHECKING:
     from strawberry.types.base import StrawberryType
+
     from graphemy.models import Graphemy
 
 
@@ -152,12 +153,11 @@ def multiple_sort(
 
             # Invert the value if descending
             if order == "desc":
-                if order == "desc":
-                    value = (
-                        -value
-                        if field_type in ["int", "float", "date", "datetime"]
-                        else "".join(chr(255 - ord(c)) for c in value)
-                    )
+                value = (
+                    -value
+                    if field_type in ["int", "float", "date", "datetime"]
+                    else "".join(chr(255 - ord(c)) for c in value)
+                )
             key.append(value)
         return tuple(key)
 

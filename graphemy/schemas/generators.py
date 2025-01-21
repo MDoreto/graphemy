@@ -120,7 +120,8 @@ def set_schema(
             ):
                 cls.__table__.append_constraint(
                     ForeignKeyConstraint(
-                        foreign_key_source, foreign_key_target,
+                        foreign_key_source,
+                        foreign_key_target,
                     ),
                 )
                 foreign_keys_added.append(
@@ -160,7 +161,8 @@ def set_schema(
 
 
 def get_dl_field(
-    field_attribute: Callable, returned_class_name: "str",
+    field_attribute: Callable,
+    returned_class_name: "str",
 ) -> Callable:
     """
     Creates a DataLoader function for a Graphemy field that may be singular or plural
@@ -194,7 +196,9 @@ def get_dl_field(
         the `keys` which map to the source/target relationship fields.
         """
         return await get_items(
-            Setup.classes[returned_class_name], keys, field_attribute.target,
+            Setup.classes[returned_class_name],
+            keys,
+            field_attribute.target,
         )
 
     dataloader_func.__name__ = field_attribute.dl_name
@@ -263,10 +267,17 @@ def get_dl_function(
     ]
 
     def _resolve_attribute(
-        instance: "Graphemy", attribute: str | int,
+        instance: "Graphemy",
+        attribute: str | int,
     ) -> str | int:
         """Safely resolves an attribute (potentially prefixed with underscores) from a model instance."""
-        attr_name = attribute if isinstance(attribute, int) else  attribute[1:] if attribute.startswith("_") else attribute
+        attr_name = (
+            attribute
+            if isinstance(attribute, int)
+            else attribute[1:]
+            if attribute.startswith("_")
+            else attribute
+        )
         return getattr(instance, attr_name)
 
     def _resolve_value(instance: "Graphemy") -> list[str | int] | str | int:
@@ -306,7 +317,8 @@ def get_dl_function(
             """
             key_values = _resolve_value(self)
             result = await info.context[data_loader_name].load(
-                key_values, where,
+                key_values,
+                where,
             )
 
             # Apply multiple sort if specified
@@ -348,7 +360,8 @@ def get_dl_function(
             """
             key_values = _resolve_value(self)
             result = await info.context[data_loader_name].load(
-                key_values, where,
+                key_values,
+                where,
             )
             return result[0] if len(result) > 0 else None
 

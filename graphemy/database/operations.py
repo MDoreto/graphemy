@@ -8,6 +8,7 @@ from sqlalchemy.sql.elements import AsBoolean
 from sqlmodel import Session, and_, func, or_, select
 
 from graphemy.setup import Setup
+
 from .utils import get_query_filter, get_sort_criteria
 
 if TYPE_CHECKING:
@@ -76,9 +77,7 @@ async def get_items(
             query_filter = json.loads(filter_str)
         # Build the actual SQLAlchemy filter conditions
         query_filter = (
-            get_query_filter(query_filter, model, [])
-            if filter_str
-            else [True]
+            get_query_filter(query_filter, model, []) if filter_str else [True]
         )
 
         # Execute the query with the given filters

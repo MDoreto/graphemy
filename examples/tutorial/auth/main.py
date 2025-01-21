@@ -70,7 +70,9 @@ def query_filter(model: "Graphemy", context: dict) -> bool:
 
 
 async def permission_getter(
-    module_class: "Graphemy", context: dict, _request_type: str,
+    module_class: "Graphemy",
+    context: dict,
+    _request_type: str,
 ) -> bool:
     return module_class.__name__ in context["user"]["classes"]
 

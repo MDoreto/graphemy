@@ -9,7 +9,6 @@ from sqlalchemy.sql import Select
 from sqlmodel import Session
 from strawberry.permission import BasePermission
 
-
 if TYPE_CHECKING:
     from .models import Graphemy
 
@@ -22,7 +21,6 @@ class Setup:
     """
 
     # A dictionary of named SQLAlchemy engine instances.
-    # Example: {"default": sync_engine, "alternative": sync_or_async_engine}
     engine: dict[str, Engine] = None
 
     # A function responsible for determining whether a request
@@ -53,7 +51,7 @@ class Setup:
         # If an asynchronous engine is configured, use an AsyncSession.
         if cls.async_engine:
             async_session = sessionmaker(
-                cls.engine[engine],     # Retrieve the engine by key
+                cls.engine[engine],  # Retrieve the engine by key
                 class_=AsyncSession,
                 expire_on_commit=False,
             )
@@ -106,6 +104,7 @@ class Setup:
         if query_filter:
             cls.query_filter = query_filter
         else:
+
             def query_filter_default(
                 _cls: "Graphemy",
                 _info: strawberry.Info,
@@ -119,6 +118,7 @@ class Setup:
         if permission_getter:
             cls.permission_getter = permission_getter
         else:
+
             async def permission_getter(
                 _module_class: "Graphemy",
                 _info: strawberry.Info,

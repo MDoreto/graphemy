@@ -1,4 +1,5 @@
 import re
+
 from sqlmodel import SQLModel
 from strawberry.types.base import StrawberryType
 
@@ -110,4 +111,3 @@ class Graphemy(SQLModel):
         Returns:
             bool: True if the request is allowed, False otherwise.
         """
-        pass

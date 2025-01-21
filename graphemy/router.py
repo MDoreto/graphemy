@@ -50,13 +50,13 @@ def genre_empty_query() -> object:
     Returns:
         object: An empty class to hold query resolvers.
     """
+
     class Query:
         """
         A class used as a container for defining GraphQL queries.
         All resolvers associated with fetching data are attached
         to instances of this class or its subclasses.
         """
-        pass
 
     return Query
 
@@ -72,6 +72,7 @@ def genre_empty_mutation() -> object:
     Returns:
         object: An empty class to hold mutation resolvers.
     """
+
     class Mutation:
         __auto_generated__ = True
         """
@@ -132,7 +133,6 @@ class GraphemyRouter(GraphQLRouter):
         auto_foreign_keys: bool = False,
         **kwargs: dict,
     ) -> None:
-
         # If no extensions are specified, initialize with an empty list
         if not extensions:
             extensions = []
@@ -252,7 +252,11 @@ class GraphemyRouter(GraphQLRouter):
                 context[k] = GraphemyDataLoader(
                     load_fn=(
                         func
-                        if await Setup.permission_getter(return_class, context, "query")
+                        if await Setup.permission_getter(
+                            return_class,
+                            context,
+                            "query",
+                        )
                         else fake_dl
                     ),
                     filter_method=dl_filter,
