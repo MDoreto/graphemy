@@ -12,9 +12,8 @@ In the most part of cases you will just need this method, because you want contr
 If we will use same logic to define the control aceess for every table in our api we can declare a function that will receive the class of the query (`Graphemy` model that you declared to represent the table that is been used), context of request and query type( string with the type of request: 'query', 'put_mutation', 'delete_mutation') and should return a boolen that indicate if this request has the needed permissions for the table.
 
 ``` python
-{!./examples/tutorial/auth/main.py[ln:37-39]!}
+{!./examples/tutorial/auth/main.py[ln:72-77]!}
 
-{!./examples/tutorial/auth/main.py[ln:60-61]!}
 ```
 
 /// note
@@ -22,7 +21,7 @@ If we will use same logic to define the control aceess for every table in our ap
 These Functions and the following functions should be passed to `GraphemyRouter`.
 
 ``` python
-{!./examples/tutorial/auth/main.py[ln:65-71]!}
+{!./examples/tutorial/auth/main.py[ln:81-87]!}
 ```
 
 for more details about context:[Strawberry](https://strawberry.rocks/docs/integrations/fastapi#context_getter).
@@ -46,9 +45,8 @@ Its a more complex access control, lets supose that some user can get data from 
 This function responsible to put a filter inside all main querys, using our example, we will have something like:
 
 ``` python
-{!./examples/tutorial/auth/main.py[ln:37-39]!}
+{!./examples/tutorial/auth/main.py[ln:66-69]!}
 
-{!./examples/tutorial/auth/main.py[ln:54-57]!}
 ```
 
 /// note
@@ -63,9 +61,8 @@ This function should return a SQLAlchemy filter statement.
 This function responsible to put a filter inside all main querys, using our example, we will have something like:
 
 ``` python
-{!./examples/tutorial/auth/main.py[ln:37-39]!}
+{!./examples/tutorial/auth/main.py[ln:54-63]!}
 
-{!./examples/tutorial/auth/main.py[ln:42-51]!}
 ```
 
 /// note

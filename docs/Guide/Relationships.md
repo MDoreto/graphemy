@@ -5,9 +5,9 @@ Create a link between our two models is a very simple task with graphemy, we jus
 It works basicly like foreign keys in a convencional database.
 
 
-```Python  hl_lines="10 18"
+```Python  hl_lines="10 20"
 # models.py
-{!./examples/tutorial/relationship/models.py[ln:1-18]!}
+{!./examples/tutorial/relationship/models.py[ln:1-20]!}
 ```
 
 In this case the relationship `Teacher` -> `Course` will be done using field `teacher_id` of `Course` and field `id` of `Teacher`.
@@ -22,9 +22,9 @@ As the relationship `Teacher` -> `Course` is `1 -> N`, in this case we use `list
 
 Source and Target parameters can receive a list too, this is useful when you have tables that need many keys to be linked, for example:
 
-```Python  hl_lines="8-10 18-20"
+```Python  hl_lines="10-13 21-25"
 # models.py
-{!./examples/tutorial/relationship/models.py[ln:26-45]!}
+{!./examples/tutorial/relationship/models.py[ln:28-50]!}
 ```
 
 

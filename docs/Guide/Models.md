@@ -33,7 +33,7 @@ To help the imports you can import `Field` from graphemy, that is the same of `S
 
 Then, create a router based on this query and import it in a fastapi app.
 
-```Python hl_lines="9 20-22"
+```Python hl_lines="9 20-24"
 {!./examples/tutorial/basic/main.py!}
 ```
 
@@ -70,7 +70,7 @@ Now you have queries, put and delete mutations for both classes created
 
 ![strawberry basic_query](../assets/put_mutation.png){ width="800" .center}
 
-Note that every query already have a filter option where you can filter results by every column.
+Note that every query already have a **filter**, **sort** and **pagination** options.
 
 ![strawberry query_filter](../assets/basic_query.png){ width="800" .center}
 
