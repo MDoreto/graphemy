@@ -7,7 +7,7 @@ def test_class_permission(client_auth):
                     id
                     description
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 403
@@ -15,9 +15,9 @@ def test_class_permission(client_auth):
         "data": {"privates": []},
         "errors": [
             {
-                "message": "User don't have necessary permissions for this path",
+                "message": "User doesn't have necessary permissions for this path",
                 "path": ["private"],
-            }
+            },
         ],
     }
 
@@ -39,19 +39,21 @@ def test_permission_dl(client_auth):
                         description
                     }
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 403
     assert response.json() == {
         "data": {
-            "owners": [{"id": "1", "name": "Center 1", "privates": [], "keys": []}]
+            "owners": [
+                {"id": "1", "name": "Center 1", "privates": [], "keys": []},
+            ],
         },
         "errors": [
             {
-                "message": "User don't have necessary permissions for this path",
+                "message": "User doesn't have necessary permissions for this path",
                 "path": ["private", "key"],
-            }
+            },
         ],
     }
 
@@ -69,7 +71,7 @@ def test_permission_dl_one(client_auth):
                         description
                     }
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 403
@@ -78,13 +80,13 @@ def test_permission_dl_one(client_auth):
             "resources": [
                 {"id": 1, "name": "Base 1", "private": None},
                 {"id": 2, "name": "Base 2", "private": None},
-            ]
+            ],
         },
         "errors": [
             {
-                "message": "User don't have necessary permissions for this path",
+                "message": "User doesn't have necessary permissions for this path",
                 "path": ["private"],
-            }
+            },
         ],
     }
 
@@ -99,7 +101,7 @@ def test_query_permission(client_auth):
                     name
                     category
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
@@ -108,8 +110,8 @@ def test_query_permission(client_auth):
             "resources": [
                 {"category": "A", "id": 1, "name": "Base 1"},
                 {"category": "B", "id": 2, "name": "Base 2"},
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -126,7 +128,7 @@ def test_dl_filter(client_auth):
                         category
                     }
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
@@ -140,7 +142,7 @@ def test_dl_filter(client_auth):
                         {"id": 1, "category": "A"},
                         {"id": 2, "category": "B"},
                     ],
-                }
-            ]
-        }
+                },
+            ],
+        },
     }

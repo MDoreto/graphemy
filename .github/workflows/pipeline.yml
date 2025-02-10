@@ -14,13 +14,13 @@ jobs:
           python-version: '3.12'
       
       - name: Install Poetry
-        run: pip install poetry
+        run: pip install uv
       
       - name: Install dependencies
-        run: poetry install --without doc
+        run: uv sync --no-group doc
       
       - name: Run tests
-        run: poetry run task test --cov-report=xml
+        run: uv run task test --cov-report=xml
       
       - name: Upload coverage reports to Codecov
         uses:  codecov/codecov-action@v3

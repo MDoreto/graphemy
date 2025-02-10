@@ -6,7 +6,7 @@ def test_multi_query(client_data):
   teachers {
     id
     name
-    courses(filters: {id: 2}) {
+    courses(where: {id: {in: 2}}) {
       id
       name
     }
@@ -14,12 +14,12 @@ def test_multi_query(client_data):
   teacher2: teachers {
     id
     name
-    courses(filters: {id: 1}) {
+    courses(where: {id: {in: 1} }) {
       id
       name
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -30,16 +30,16 @@ def test_multi_query(client_data):
                     "id": 1,
                     "name": "Some Teacher",
                     "courses": [{"id": 2, "name": "Physics"}],
-                }
+                },
             ],
             "teacher2": [
                 {
                     "id": 1,
                     "name": "Some Teacher",
                     "courses": [{"id": 1, "name": "Mathematics"}],
-                }
+                },
             ],
-        }
+        },
     }
 
 
@@ -49,18 +49,18 @@ def test_multi_query_one(client_data):
         json={
             "query": """query MyQuery {
   courses {
-    teacher(filters: {id: 1}) {
+    teacher(where: {id: { in: 1 }}) {
       name
     }
     name
   }
   courses2: courses {
-    teacher(filters: {id: 2}) {
+    teacher(where: {id: { in: 2} }) {
       name
     }
     name
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -74,7 +74,7 @@ def test_multi_query_one(client_data):
                 {"teacher": None, "name": "Mathematics"},
                 {"teacher": None, "name": "Physics"},
             ],
-        }
+        },
     }
 
 
@@ -96,7 +96,7 @@ def test_multi_key(client_data):
       }
     }
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
@@ -131,8 +131,10 @@ def test_multi_key(client_data):
                 {
                     "name": "Another Name",
                     "birthDate": "1998-05-12",
-                    "courses": [{"course": {"name": "Mathematics"}, "grader": []}],
+                    "courses": [
+                        {"course": {"name": "Mathematics"}, "grader": []},
+                    ],
                 },
-            ]
-        }
+            ],
+        },
     }

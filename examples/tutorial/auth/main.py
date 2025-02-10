@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from sqlmodel import Session, create_engine
 from sqlmodel.pool import StaticPool
 
@@ -15,8 +15,24 @@ Graphemy.metadata.create_all(engine)
 
 with Session(engine) as session:
     session.add(Owner(id="1", name="Center 1"))
-    session.add(Resource(id=1, name="Base 1", category="A", owner_id="1", private_id=1))
-    session.add(Resource(id=2, name="Base 2", category="B", owner_id="1", private_id=1))
+    session.add(
+        Resource(
+            id=1,
+            name="Base 1",
+            category="A",
+            owner_id="1",
+            private_id=1,
+        ),
+    )
+    session.add(
+        Resource(
+            id=2,
+            name="Base 2",
+            category="B",
+            owner_id="1",
+            private_id=1,
+        ),
+    )
     session.add(
         Resource(
             id=3,
@@ -24,18 +40,18 @@ with Session(engine) as session:
             category="C",
             owner_id="2",
             private_id=None,
-        )
+        ),
     )
     session.add(Private(id=1, description="Extra 1", owner_id="1"))
     session.commit()
 
 
-async def get_context(request, response):
+async def get_context(_request: Request, _response: Response) -> dict:
     user = {"categories": ["A", "B"], "classes": ["Resource", "Owner"]}
     return {"user": user}
 
 
-def dl_filter(data, context):
+def dl_filter(data: list["Graphemy"], context: dict) -> list["Graphemy"]:
     user = context["user"]
     if (
         data
@@ -47,13 +63,17 @@ def dl_filter(data, context):
     return data
 
 
-def query_filter(model, context):
+def query_filter(model: "Graphemy", context: dict) -> bool:
     if model.__name__ == "Resource":
         return model.category.in_(context["user"]["categories"])
     return True
 
 
-async def permission_getter(module_class, context, request_type):
+async def permission_getter(
+    module_class: "Graphemy",
+    context: dict,
+    _request_type: str,
+) -> bool:
     return module_class.__name__ in context["user"]["classes"]
 
 

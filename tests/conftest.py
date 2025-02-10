@@ -28,7 +28,7 @@ def client(clear_classes):
     from examples.tutorial.basic.main import app, engine
 
     Setup.setup(engine)
-    yield TestClient(app)
+    return TestClient(app)
 
 
 @pytest.fixture(scope="module")

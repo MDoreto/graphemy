@@ -14,7 +14,7 @@ def test_no_query():
         json={
             "query": """query MyQuery {
                             helloWorld
-                        }"""
+                        }""",
         },
     )
     assert response.status_code == 200
@@ -29,7 +29,7 @@ def test_wrong_query(client):
                 fake {
                     error
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
@@ -39,7 +39,7 @@ def test_wrong_query(client):
             {
                 "message": "Cannot query field 'fake' on type 'Query'.",
                 "locations": [{"line": 2, "column": 17}],
-            }
+            },
         ],
     }
 
@@ -50,6 +50,10 @@ def test_dl_error_type():
     from graphemy import Dl, Field, Graphemy
 
     with pytest.raises(BaseException):
+
+        class Test(Graphemy, table=True):
+            id: int | None = Field(primary_key=True, default=None)
+            test1: str
 
         class User(Graphemy, table=True):
             id: int | None = Field(primary_key=True, default=None)
@@ -65,21 +69,24 @@ def test_dl_error_length():
 
     with pytest.raises(BaseException):
 
+        class Something(Graphemy, table=True):
+            id: int | None = Field(primary_key=True, default=None)
+            test1: str
+
         class User(Graphemy, table=True):
             id: int | None = Field(primary_key=True, default=None)
             first_name: str
             last_name: str
-            test: "Test" = Dl(source=["test1", "test2"], target=["test1"])
+            something: "Something" = Dl(source=["test1", "test2"], target=["test1"])
 
 
 def test_composite_with_null():
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     from sqlmodel import Session, create_engine
-    from sqlmodel.main import default_registry
     from sqlmodel.pool import StaticPool
 
-    from graphemy import Dl, Field, Graphemy, GraphemyRouter, Setup
+    from graphemy import Dl, Field, Graphemy, GraphemyRouter
 
     class Source(Graphemy, table=True):
         id: int | None = Field(primary_key=True, default=None)
@@ -90,7 +97,9 @@ def test_composite_with_null():
     class Target(Graphemy, table=True):
         fk_1: str = Field(primary_key=True)
         fk_2: str = Field(primary_key=True)
-        source: list["Source"] = Dl(source=["fk_1", "fk_2"], target=["fk_1", "fk_2"])
+        source: list["Source"] = Dl(
+            source=["fk_1", "fk_2"], target=["fk_1", "fk_2"],
+        )
 
     engine = create_engine(
         "sqlite://",
@@ -120,10 +129,10 @@ def test_composite_with_null():
                                     fk2
                                 }
                             
-                        }}"""
+                        }}""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
-        "data": {"sources": [{"fk1": "2", "fk2": None, "target": None}]}
+        "data": {"sources": [{"fk1": "2", "fk2": None, "target": None}]},
     }

@@ -6,7 +6,7 @@ def test_insert(client):
                 putStudent(params: {birthDate: "1999-09-16", name: "Some Name"}) {
                     id
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
@@ -22,12 +22,12 @@ putStudentCourse(params: {courseId: 1, studentId: 1}) {
     studentId
     courseId
   }
-}"""
+}""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
-        "data": {"putStudentCourse": {"studentId": 1, "courseId": 1}}
+        "data": {"putStudentCourse": {"studentId": 1, "courseId": 1}},
     }
 
 
@@ -41,14 +41,16 @@ def test_read(client):
                     name
                     birthDate
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
         "data": {
-            "students": [{"birthDate": "1999-09-16", "id": 1, "name": "Some Name"}]
-        }
+            "students": [
+                {"birthDate": "1999-09-16", "id": 1, "name": "Some Name"},
+            ],
+        },
     }
 
 
@@ -61,12 +63,12 @@ def test_update(client):
                     id
                     name
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
-        "data": {"putStudent": {"id": 1, "name": "Some Name Last"}}
+        "data": {"putStudent": {"id": 1, "name": "Some Name Last"}},
     }
     response = client.post(
         "/graphql",
@@ -77,14 +79,16 @@ def test_update(client):
                     name
                     birthDate
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
         "data": {
-            "students": [{"birthDate": "1999-09-16", "id": 1, "name": "Some Name Last"}]
-        }
+            "students": [
+                {"birthDate": "1999-09-16", "id": 1, "name": "Some Name Last"},
+            ],
+        },
     }
 
 
@@ -96,7 +100,7 @@ def test_delete(client):
                 deleteStudent(params: {id: 1}) {
                     id
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
@@ -110,7 +114,7 @@ def test_delete(client):
                     name
                     birthDate
                 }
-            }"""
+            }""",
         },
     )
     assert response.status_code == 200
