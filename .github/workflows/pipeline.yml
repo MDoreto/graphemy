@@ -17,7 +17,7 @@ jobs:
         run: pip install uv
       
       - name: Install dependencies
-        run: poetry install --no-group doc
+        run: uv sync --no-group doc
       
       - name: Run tests
         run: uv run task test --cov-report=xml
