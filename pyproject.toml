@@ -1,6 +1,6 @@
 [project]
 name = "graphemy"
-version = "1.0.4"
+version = "1.1.0"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = [
     {name = "Matheus Doreto", email = "matheusdoreto.md@gmail.com"},
