@@ -16,7 +16,7 @@ class Course(Graphemy, table=True):
     name: str
     students: list["StudentCourse"] = Dl(source="id", target="course_id")
     teacher_id: int
-    teacher: "Teacher" = Dl(source="teacher_id", target="id")
+    teacher: "Teacher" = Dl(source="teacher_id", target="id", description="The teacher who teaches this course.")
 
 
 class Student(Graphemy, table=True):

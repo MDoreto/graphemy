@@ -81,7 +81,7 @@ def set_schema(
                 field_attribute,
                 permission_classes=[
                     Setup.get_auth(returned_graphemy_model, "query"),
-                ],
+                ], **field_attribute.to_strawberry_kwargs
             ),
         )
 
@@ -373,6 +373,7 @@ def get_dl_function(
     loader_func.source = dl_field_value.source
     loader_func.foreign_key = dl_field_value.foreign_key
     loader_func.dl_name = data_loader_name
+    loader_func.to_strawberry_kwargs = dl_field_value.to_strawberry_kwargs
 
     return loader_func
 

@@ -23,17 +23,21 @@ class Dl:
         source (str | list[str]): The name or list of names of the source fields.
         target (str | list[str]): The name or list of names of the target fields.
         foreign_key (bool | None): Indicates if this mapping involves a foreign key.
+        to_strawberry_kwargs (dict): Additional keyword arguments for Strawberry
+            field configuration, such as `description`, `deprecation_reason`, etc.
     """
 
     source: str | list[str]
     target: str | list[str]
     foreign_key: bool | None = None
+    to_strawberry_kwargs: dict = {}
 
     def __init__(
         self,
         source: str | list[str],
         target: str | list[str],
         foreign_key: bool | None = None,
+        **kwargs: dict,
     ) -> None:
         """
         Initialize a Dl instance, checking for consistent data types and lengths
@@ -44,6 +48,7 @@ class Dl:
             target (str | list[str]): The target field(s) name(s).
             foreign_key (bool | None, optional): Specifies if the mapping
                 is a foreign key relationship. Defaults to None.
+            **kwargs (dict): Additional keyword arguments for Strawberry field
 
         Raises:
             ValueError: If source and target types differ (one is a list while the other
@@ -77,6 +82,7 @@ class Dl:
         self.source = source
         self.target = target
         self.foreign_key = foreign_key
+        self.to_strawberry_kwargs = kwargs
 
 
 ReturnType: TypeVar = (
