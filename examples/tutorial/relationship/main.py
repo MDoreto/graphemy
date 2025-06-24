@@ -34,7 +34,9 @@ with Session(engine) as session:
     )
     session.add(
         Student(
-            name="Another Name", birth_date=date(1998, 5, 12), school_id=1
+            name="Another Name",
+            birth_date=date(1998, 5, 12),
+            school_id=1,
         ),
     )
     session.add(StudentCourse(student_id=1, course_id=1))

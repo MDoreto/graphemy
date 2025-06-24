@@ -81,7 +81,8 @@ def set_schema(
                 field_attribute,
                 permission_classes=[
                     Setup.get_auth(returned_graphemy_model, "query"),
-                ], **field_attribute.to_strawberry_kwargs
+                ],
+                **field_attribute.to_strawberry_kwargs,
             ),
         )
 

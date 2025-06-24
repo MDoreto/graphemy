@@ -1,6 +1,6 @@
 [project]
 name = "graphemy"
-version = "1.1.0"
+version = "1.1.1"
 description = "A Python library for integrating SQLModel and Strawberry, providing a seamless GraphQL integration with FastAPI and advanced features for database interactions."
 authors = [
     {name = "Matheus Doreto", email = "matheusdoreto.md@gmail.com"},
@@ -79,13 +79,13 @@ line_length = 79
 [tool.taskipy.tasks]
 ex_basic = "fastapi dev examples/tutorial/basic/main.py"
 ex_dl = "fastapi dev examples/tutorial/relationship/main.py"
-lint = "black . && isort ."
+lint = "ruff format && ruff check --fix"
 docs = "mkdocs serve"
-pre_publish = "poetry export --output requirements-docs.txt --with doc --without-hashes   "
-# pre_test = "task lint"
+pre_test = "task lint"
 test = "pytest -s -x --cov=graphemy -vv -W ignore::DeprecationWarning"
 post_test = "coverage html"
-publish = "poetry publish --build"
+pre_publish = "task lint"
+publish = "uv build && uv publish"
 
 
 [tool.coverage.report]

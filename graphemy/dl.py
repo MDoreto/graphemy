@@ -30,7 +30,7 @@ class Dl:
     source: str | list[str]
     target: str | list[str]
     foreign_key: bool | None = None
-    to_strawberry_kwargs: dict = {}
+    to_strawberry_kwargs: dict
 
     def __init__(
         self,
