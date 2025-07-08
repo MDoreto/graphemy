@@ -272,14 +272,13 @@ def get_dl_function(
         attribute: str | int,
     ) -> str | int:
         """Safely resolves an attribute (potentially prefixed with underscores) from a model instance."""
-        attr_name = (
+        return (
             attribute
             if isinstance(attribute, int)
             else attribute[1:]
             if attribute.startswith("_")
-            else attribute
+            else getattr(instance, attribute)
         )
-        return getattr(instance, attr_name)
 
     def _resolve_value(instance: "Graphemy") -> list[str | int] | str | int:
         """
